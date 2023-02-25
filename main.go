@@ -3,6 +3,7 @@ package main
 import (
 	"Gedis/config"
 	"Gedis/lib/logger"
+	"Gedis/resp/handler"
 	"Gedis/tcp"
 	"fmt"
 	"os"
@@ -41,7 +42,7 @@ func main() {
 				config.Properties.Bind,
 				config.Properties.Port),
 		},
-		tcp.MakeHandler())
+		handler.MakeHandler())
 	if err != nil {
 		logger.Error(err)
 	}

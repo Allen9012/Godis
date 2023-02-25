@@ -49,6 +49,7 @@ func ParseStream(reader io.Reader) <-chan *PayLoad {
 func parse0(reader io.Reader, ch chan<- *PayLoad) {
 	defer func() {
 		if err := recover(); err != nil {
+			logger.Error(err)
 			logger.Error(string(debug.Stack()))
 		}
 	}()
@@ -172,19 +173,18 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 		if len(msg) == 0 || msg[len(msg)-2] != '\r' {
 			return nil, false, errors.New("protocol error: " + string(msg))
 		}
-		return msg, false, nil
 	} else { //2. 如果有$数字，表示严格读取 \r\n是数据本身不能分行
-		msg := make([]byte, state.bulkLen+2) // 多两个\r\n
+		msg = make([]byte, state.bulkLen+2) // 多两个\r\n
 		_, err = io.ReadFull(bufReader, msg)
 		if err != nil {
 			return nil, true, err
 		}
-		if len(msg) == 0 || msg[len(msg)-2] != '\r' {
+		if len(msg) == 0 || msg[len(msg)-2] != '\r' || msg[len(msg)-1] != '\n' {
 			return nil, false, errors.New("protocol error: " + string(msg))
 		}
 		state.bulkLen = 0 // 读下一行的时候更新buklen
 	}
-	return msg, false, err
+	return msg, false, nil
 }
 
 //

@@ -19,5 +19,5 @@ type Dict interface {
 	Keys() []string
 	RandomKeys(limit int) []string         //返回limit数量的键
 	RandomDistinctKeys(limit int) []string // 返回limit数量的不重复的键
-	clear()
+	Clear()
 }

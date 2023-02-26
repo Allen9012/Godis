@@ -124,7 +124,7 @@ func (dict *SyncDict) RandomDistinctKeys(limit int) []string {
 }
 
 // Clear removes all keys in dict
-func (dict *SyncDict) clear() {
+func (dict *SyncDict) Clear() {
 	// 旧的让系统gc
 	*dict = *MakeSyncDict()
 }

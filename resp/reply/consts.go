@@ -12,6 +12,10 @@ func (r *PongReply) ToBytes() []byte {
 	return pongBytes
 }
 
+func MakePongReply() *PongReply {
+	return &PongReply{}
+}
+
 // OkReply is +OK
 type OkReply struct{}
 
@@ -62,4 +66,8 @@ var noBytes = []byte("")
 // ToBytes marshal redis.Reply
 func (r *NoReply) ToBytes() []byte {
 	return noBytes
+}
+
+func MakeNoReply() *NoReply {
+	return &NoReply{}
 }

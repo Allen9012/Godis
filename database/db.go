@@ -99,13 +99,13 @@ func (db *DB) GetEntity(key string) (*database.DataEntity, bool) {
 //  @param entity
 //  @return int 存入多少个
 //
-func (db *DB) PutEntity(key string, entity database.DataEntity) int {
+func (db *DB) PutEntity(key string, entity *database.DataEntity) int {
 	// 存的时候会自动转化空接口，取的时候需要自己转化
 	return db.data.Put(key, entity)
 }
 
 // PutIfExists edit an existing DataEntity
-func (db *DB) PutIfExists(key string, entity database.DataEntity) int {
+func (db *DB) PutIfExists(key string, entity *database.DataEntity) int {
 	return db.data.PutIfExists(key, entity)
 }
 

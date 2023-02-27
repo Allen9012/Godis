@@ -58,7 +58,8 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 	var err error
 	var msg []byte
 	// 循环解析
-	for true {
+	for {
+		// read line
 		var ioErr bool
 		msg, ioErr, err = readLine(bufReader, &state)
 		if err != nil {
@@ -69,6 +70,7 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 				close(ch)
 				return
 			}
+			// protocol err, reset read state
 			ch <- &PayLoad{
 				Err: err,
 			}
@@ -81,8 +83,9 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 				// 利用下面的方法会解析出3，然后修改readingMultiLine改成多行模式
 				err = parseMultiBulkHeader(msg, &state)
 				if err != nil {
+					logger.Error(err)
 					ch <- &PayLoad{
-						Err: err,
+						Err: errors.New("protocol error: " + string(msg)),
 					}
 					state = readState{}
 					continue
@@ -97,6 +100,7 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 			} else if msg[0] == '$' { // 一开始就遇到 $3\r\n
 				err = parseBulkHeader(msg, &state)
 				if err != nil {
+					logger.Error(err)
 					ch <- &PayLoad{
 						Err: errors.New("protocol error: " + string(msg)),
 					}
@@ -106,23 +110,26 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 				// 空指令
 				if state.bulkLen == -1 { // $-1\r\n
 					ch <- &PayLoad{
-						Data: &reply.EmptyMultiBulkReply{},
+						Data: &reply.NullBulkReply{},
 					}
 					state = readState{}
 					continue
 				}
 			} else {
+				// single line reply
 				result, err := parseSingleLineReply(msg)
 				if err != nil {
-					ch <- &PayLoad{
-						Data: result,
-						Err:  err,
-					}
-					state = readState{}
-					continue
+					logger.Error(err)
 				}
+				ch <- &PayLoad{
+					Data: result,
+					Err:  err,
+				}
+				state = readState{} // reset state
+				continue
 			}
 		} else { // 读多行
+			// receive following bulk reply
 			err := readBody(msg, &state)
 			if err != nil {
 				ch <- &PayLoad{
@@ -131,6 +138,7 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 				state = readState{}
 				continue
 			}
+			// if sending finished
 			if state.finished() {
 				var result resp.Reply
 				if state.msgType == '*' {
@@ -253,16 +261,24 @@ func parseSingleLineReply(msg []byte) (resp.Reply, error) {
 	str := strings.TrimSuffix(string(msg), "\r\n")
 	var result resp.Reply
 	switch msg[0] {
-	case '+':
+	case '+': // status reply
 		result = reply.MakeStatusReply(str[1:])
-	case '-':
+	case '-': // err reply
 		result = reply.MakeErrReply(str[1:])
-	case ':':
+	case ':': // int reply
 		val, err := strconv.ParseInt(str[1:], 10, 64)
 		if err != nil {
 			return nil, errors.New("protocol error: " + string(msg))
 		}
 		result = reply.MakeIntReply(val)
+	default:
+		// parse as text protocol
+		strs := strings.Split(str, " ")
+		args := make([][]byte, len(strs))
+		for i, s := range strs {
+			args[i] = []byte(s)
+		}
+		result = reply.MakeMultiBulkReply(args)
 	}
 	return result, nil
 }

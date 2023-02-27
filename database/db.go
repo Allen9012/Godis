@@ -55,7 +55,7 @@ func (db *DB) Exec(connection resp.Connection, cmdLine CmdLine) resp.Reply {
 	}
 	fun := cmd.exector
 	// SET K V ->K V
-	return fun(db, cmdLine)
+	return fun(db, cmdLine[1:])
 }
 
 // SET K V -> arity = 3

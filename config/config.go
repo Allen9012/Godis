@@ -10,18 +10,29 @@ import (
 	"strings"
 )
 
+const (
+	PORT                 int    = 9012
+	MAX_CLIENTS          int    = 10000
+	LOCAL_ADDR           string = "127.0.0.1"
+	AOF_AUTOSYNC_BYTES   int    = 1024 * 1024 * 10
+	DEFULT_AOF_FILENAME         = "appendOnly.aof"
+	AOF_REWRITE_MIN_SIZE        = 1024 * 1024 * 32
+	AOF_REWRITE_PERC            = 80
+)
+
 // ServerProperties defines global config properties
 type ServerProperties struct {
-	Bind           string `cfg:"bind"`
-	Port           int    `cfg:"port"`
-	AppendOnly     bool   `cfg:"appendOnly"`
-	AppendFilename string `cfg:"appendFilename"`
-	MaxClients     int    `cfg:"maxclients"`
-	RequirePass    string `cfg:"requirepass"`
-	Databases      int    `cfg:"databases"`
-
-	Peers []string `cfg:"peers"`
-	Self  string   `cfg:"self"`
+	Bind           string   `cfg:"bind"`
+	Port           int      `cfg:"port"`
+	AppendOnly     bool     `cfg:"appendOnly"` //是否启用AOF
+	AppendFilename string   `cfg:"appendFilename"`
+	MaxClients     int      `cfg:"maxclients"`
+	RequirePass    string   `cfg:"requirepass"`
+	Databases      int      `cfg:"databases"`
+	Peers          []string `cfg:"peers"`
+	Self           string   `cfg:"self"`
+	// 额外字段
+	aofAutoSyncBytes int `cfg:"aofAutoSyncBytes"`
 }
 
 // Properties holds global config properties
@@ -30,9 +41,10 @@ var Properties *ServerProperties
 func init() {
 	// default config
 	Properties = &ServerProperties{
-		Bind:       "127.0.0.1",
-		Port:       6379,
-		AppendOnly: false,
+		Bind:             LOCAL_ADDR,
+		Port:             PORT,
+		AppendOnly:       false,
+		aofAutoSyncBytes: AOF_AUTOSYNC_BYTES,
 	}
 }
 

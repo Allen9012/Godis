@@ -15,19 +15,19 @@ import (
 	"strings"
 )
 
-// Database is a set of multiple database set
-type Database struct {
+// StandaloneDatabase is a set of multiple database set
+type StandaloneDatabase struct {
 	dbSet      []*DB
 	aofHandler *aof.AofHandler
 }
 
 //
-// NewDatabase creates a redis database
+// NewStandaloneDatabase creates a redis database
 //  @Description: 创建数据库内核
-//  @return *Database
+//  @return *StandaloneDatabase
 //
-func NewDatabase() *Database {
-	database := &Database{}
+func NewStandaloneDatabase() *StandaloneDatabase {
+	database := &StandaloneDatabase{}
 	if config.Properties.Databases == 0 {
 		config.Properties.Databases = 16
 	}
@@ -67,7 +67,7 @@ func NewDatabase() *Database {
 //  @param args eg: set k v | get k | select 2
 //  @return resp.Reply
 //
-func (d *Database) Exec(client resp.Connection, args [][]byte) resp.Reply {
+func (d *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
 	// 核心方法需要recover防止崩溃
 	defer func() {
 		if err := recover(); err != nil {
@@ -88,10 +88,10 @@ func (d *Database) Exec(client resp.Connection, args [][]byte) resp.Reply {
 }
 
 // Close graceful shutdown database
-func (d *Database) Close() {
+func (d *StandaloneDatabase) Close() {
 }
 
-func (d *Database) AfterClientClose(c resp.Connection) {
+func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 }
 
 //
@@ -102,7 +102,7 @@ func (d *Database) AfterClientClose(c resp.Connection) {
 //  @param args	eg: select 2
 //  @return resp.Reply
 //
-func execSelect(conn resp.Connection, database *Database, args [][]byte) resp.Reply {
+func execSelect(conn resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {
 		return reply.MakeErrReply("ERR invalid DB index")

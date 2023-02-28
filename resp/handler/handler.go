@@ -6,6 +6,8 @@
 package handler
 
 import (
+	"Gedis/cluster"
+	"Gedis/config"
 	"Gedis/database"
 	databaseface "Gedis/interface/database"
 	"Gedis/lib/logger"
@@ -30,7 +32,11 @@ type RespHandler struct {
 
 func MakeHandler() *RespHandler {
 	var db databaseface.Database
-	db = database.NewDatabase()
+	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+		db = cluster.MakeClusterDatabase()
+	} else {
+		db = database.NewStandaloneDatabase()
+	}
 	return &RespHandler{
 		db: db,
 	}

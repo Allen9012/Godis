@@ -9,6 +9,7 @@ import (
 	"Gedis/interface/database"
 	"Gedis/interface/resp"
 	"Gedis/lib/logger"
+	"Gedis/lib/utils"
 	"Gedis/resp/reply"
 )
 
@@ -68,6 +69,8 @@ func execSet(db *DB, args [][]byte) resp.Reply {
 		Data: value,
 	}
 	db.PutEntity(key, entity)
+	//aof
+	db.addAof(utils.ToCmdLine2("set", args...))
 	return reply.MakeOkReply()
 }
 
@@ -79,6 +82,8 @@ func execSetNX(db *DB, args [][]byte) resp.Reply {
 		Data: value,
 	}
 	result := db.PutIfAbsent(key, entity)
+	//aof
+	db.addAof(utils.ToCmdLine2("setnx", args...))
 	return reply.MakeIntReply(int64(result))
 }
 
@@ -101,6 +106,8 @@ func execGetSet(db *DB, args [][]byte) resp.Reply {
 	db.PutEntity(key, &database.DataEntity{
 		Data: value,
 	})
+	//aof
+	db.addAof(utils.ToCmdLine2("getset", args...))
 	return reply.MakeBulkReply(entity.Data.([]byte))
 }
 

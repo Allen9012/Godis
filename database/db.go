@@ -15,8 +15,9 @@ import (
 
 // DB stores data and execute user's commands
 type DB struct {
-	index int
-	data  dict.Dict
+	index  int
+	data   dict.Dict
+	addAof func(CmdLine)
 }
 
 // ExecFunc 统一执行方法
@@ -31,6 +32,8 @@ type CmdLine = [][]byte
 func makeDB() *DB {
 	db := &DB{
 		data: dict.MakeSyncDict(),
+		//修改一个bug，增加一个空的实现
+		addAof: func(line CmdLine) {},
 	}
 	return db
 }

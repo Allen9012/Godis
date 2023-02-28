@@ -6,6 +6,7 @@
 package database
 
 import (
+	"Gedis/aof"
 	"Gedis/config"
 	"Gedis/interface/resp"
 	"Gedis/lib/logger"
@@ -16,7 +17,8 @@ import (
 
 // Database is a set of multiple database set
 type Database struct {
-	dbSet []*DB
+	dbSet      []*DB
+	aofHandler *aof.AofHandler
 }
 
 //
@@ -37,6 +39,22 @@ func NewDatabase() *Database {
 		newdb.index = i
 		database.dbSet[i] = newdb
 	}
+	// 查询是否打开配置
+	if config.Properties.AppendOnly {
+		aofHandler, err := aof.NewAOFHandler(database)
+		if err != nil {
+			panic(err)
+		}
+		database.aofHandler = aofHandler
+		// 为了能让数据库调用aof方法所以把匿名方法嵌入db，这里的db是确定的所以可以调用
+		for _, db := range database.dbSet {
+			sdb := db
+			db.addAof = func(line CmdLine) {
+				database.aofHandler.AddAof(sdb.index, line)
+			}
+		}
+	}
+
 	return database
 }
 

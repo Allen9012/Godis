@@ -47,7 +47,7 @@ func init() {
 }
 
 // Setup initializes logger
-func Setup(settings *Settings) {
+func Setup(settings *Settings) error {
 	var err error
 	dir := settings.Path
 	fileName := fmt.Sprintf("%s-%s.%s",
@@ -58,10 +58,12 @@ func Setup(settings *Settings) {
 	logFile, err := mustOpen(fileName, dir)
 	if err != nil {
 		log.Fatalf("logging.Setup err: %s", err)
+		return err
 	}
 
 	mw := io.MultiWriter(os.Stdout, logFile)
 	logger = log.New(mw, defaultPrefix, flags)
+	return nil
 }
 
 func setPrefix(level logLevel) {

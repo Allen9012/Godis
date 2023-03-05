@@ -7,10 +7,20 @@ package database
 
 import (
 	"Gedis/datastruct/dict"
+	"Gedis/datastruct/lock"
 	"Gedis/interface/database"
 	"Gedis/interface/resp"
+	"Gedis/lib/logger"
+	"Gedis/lib/timewheel"
 	"Gedis/resp/reply"
 	"strings"
+	"time"
+)
+
+const (
+	dataDictSize = 1 << 16
+	ttlDictSize  = 1 << 10
+	lockerSize   = 1024
 )
 
 // DB stores data and execute user's commands
@@ -18,6 +28,11 @@ type DB struct {
 	index  int
 	data   dict.Dict
 	addAof func(CmdLine)
+	// 增加过期时间功能
+	ttlMap dict.Dict // key -> expireTime (time.Time)
+	// dict.Dict will ensure concurrent-safety of its method
+	// use this mutex for complicated command only, eg. rpush, incr ...
+	locker *lock.Locks
 }
 
 // ExecFunc 统一执行方法
@@ -34,6 +49,8 @@ func makeDB() *DB {
 		data: dict.MakeSyncDict(),
 		//修改一个bug，增加一个空的实现
 		addAof: func(line CmdLine) {},
+		// 初始化map 赋值一个SyncMap
+		ttlMap: dict.MakeSyncDict(),
 	}
 	return db
 }
@@ -120,6 +137,10 @@ func (db *DB) PutIfAbsent(key string, entity *database.DataEntity) int {
 // Remove the given key from db
 func (db *DB) Remove(key string) {
 	db.data.Remove(key)
+	// 删除ttl相关
+	db.ttlMap.Remove(key)
+	taskKey := genExpireTask(key)
+	timewheel.Cancel(taskKey)
 }
 
 // Removes the given keys from db
@@ -145,4 +166,69 @@ func (db *DB) Removes(keys ...string) (deleted int) {
 // Flush clean database
 func (db *DB) Flush() {
 	db.data.Clear()
+	// 删除ttl相关
+	db.ttlMap.Clear()
+	db.locker = lock.Make(lockerSize)
+}
+
+/* ---- TTL Functions ---- */
+
+func genExpireTask(key string) string {
+	return "expire:" + key
+}
+
+/* ---- Lock Function ----- */
+
+// RWLocks lock keys for writing and reading
+// 封装读写锁
+func (db *DB) RWLocks(writeKeys []string, readKeys []string) {
+	db.locker.RWLocks(writeKeys, readKeys)
+}
+
+// RWUnLocks unlock keys for writing and reading
+func (db *DB) RWUnLocks(writeKeys []string, readKeys []string) {
+	db.locker.RWUnLocks(writeKeys, readKeys)
+}
+
+//
+// Expire sets ttlCmd of key
+//  @Description: 设置过期时间
+//  @receiver db
+//  @param key
+//  @param expireTime
+//
+func (db *DB) Expire(key string, expireTime time.Time) {
+	db.ttlMap.Put(key, expireTime)
+	taskKey := genExpireTask(key)
+	// 指定时间执行操作
+	timewheel.At(expireTime, taskKey, func() {
+		keys := []string{key}
+		// 需要锁住所有的keys
+		db.RWLocks(keys, nil)
+		defer db.RWUnLocks(keys, nil)
+		// check-lock-check, ttl may be updated during waiting lock
+		logger.Info("expire " + key)
+		rawExpireTime, ok := db.ttlMap.Get(key)
+		if !ok {
+			return
+		}
+		expireTime, _ := rawExpireTime.(time.Time)
+		expired := time.Now().After(expireTime)
+		if expired {
+			db.Remove(key)
+		}
+	})
+}
+
+//
+// Persist cancel ttlCmd of key
+//  @Description: 删除过期时间
+//  @receiver db
+//  @param key
+//
+func (db *DB) Persist(key string) {
+	db.ttlMap.Remove(key)
+	taskKey := genExpireTask(key)
+	// 调用第三方库删除倒计时
+	timewheel.Cancel(taskKey)
 }

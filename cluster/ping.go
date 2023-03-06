@@ -1,7 +1,7 @@
 /**
   @author: Allen
   @since: 2023/2/26
-  @desc: //TODO
+  @desc: //需要单独执行Ping命令
 **/
 package cluster
 

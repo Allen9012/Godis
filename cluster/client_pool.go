@@ -1,7 +1,7 @@
 /**
   @author: Allen
   @since: 2023/2/28
-  @desc: //TODO
+  @desc: //借助go-commons-pool实现client连接池
 **/
 package cluster
 
@@ -14,7 +14,6 @@ import (
 
 type connectionFactory struct {
 	Peer string //链接的节点的地址
-
 }
 
 func (f connectionFactory) MakeObject(ctx context.Context) (*pool.PooledObject, error) {

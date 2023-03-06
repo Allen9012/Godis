@@ -55,7 +55,9 @@ func ListenAndServe(listener net.Listener, handler tcp.Handler, closeChan <-chan
 	go func() {
 		<-closeChan
 		logger.Info("shutting down")
+		// 停止监听，listener.Accept()会立即返回 io.EOF
 		_ = listener.Close()
+		// 关闭应用层服务器
 		_ = handler.Close()
 	}()
 	// 拿到一个上下文，可以设置初始化

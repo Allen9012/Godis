@@ -12,7 +12,7 @@ import (
 
 //
 // Rename renames a key, the origin and the destination must within the same node
-//  @Description:
+//  @Description: 修改名字当前支持前后修改得出结果一样
 //  @param cluster
 //  @param c
 //  @param args

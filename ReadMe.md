@@ -34,3 +34,186 @@ memcached hashtable：
 1. 优雅关闭
 2. 更多的指令集
 
+
+BenchMark测试记录（当前只有支持测试的命令只有3/4个）
+
+====== PING_INLINE ======
+100000 requests completed in 5.17 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+9.10% <= 1 milliseconds
+66.49% <= 2 milliseconds
+86.21% <= 3 milliseconds
+95.69% <= 4 milliseconds
+98.88% <= 5 milliseconds
+99.63% <= 6 milliseconds
+99.83% <= 7 milliseconds
+99.94% <= 8 milliseconds
+99.97% <= 9 milliseconds
+99.97% <= 10 milliseconds
+99.98% <= 18 milliseconds
+99.98% <= 19 milliseconds
+99.99% <= 20 milliseconds
+100.00% <= 21 milliseconds
+100.00% <= 21 milliseconds
+19327.41 requests per second
+
+====== PING_BULK ======
+100000 requests completed in 4.63 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+24.18% <= 1 milliseconds
+83.60% <= 2 milliseconds
+94.63% <= 3 milliseconds
+98.14% <= 4 milliseconds
+99.21% <= 5 milliseconds
+99.65% <= 6 milliseconds
+99.84% <= 7 milliseconds
+99.90% <= 8 milliseconds
+99.92% <= 9 milliseconds
+99.94% <= 10 milliseconds
+99.95% <= 11 milliseconds
+99.95% <= 12 milliseconds
+99.96% <= 13 milliseconds
+99.96% <= 14 milliseconds
+99.97% <= 15 milliseconds
+99.97% <= 16 milliseconds
+99.97% <= 17 milliseconds
+99.98% <= 18 milliseconds
+99.98% <= 19 milliseconds
+99.99% <= 20 milliseconds
+99.99% <= 21 milliseconds
+100.00% <= 22 milliseconds
+100.00% <= 23 milliseconds
+100.00% <= 24 milliseconds
+21584.29 requests per second
+
+====== SET ======
+100000 requests completed in 3.50 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+56.99% <= 1 milliseconds
+91.25% <= 2 milliseconds
+98.15% <= 3 milliseconds
+99.73% <= 4 milliseconds
+99.84% <= 5 milliseconds
+99.85% <= 22 milliseconds
+99.86% <= 23 milliseconds
+99.87% <= 24 milliseconds
+99.88% <= 25 milliseconds
+99.90% <= 26 milliseconds
+99.90% <= 33 milliseconds
+99.90% <= 34 milliseconds
+99.92% <= 35 milliseconds
+99.93% <= 36 milliseconds
+99.95% <= 37 milliseconds
+99.95% <= 110 milliseconds
+99.96% <= 111 milliseconds
+99.98% <= 112 milliseconds
+99.98% <= 113 milliseconds
+100.00% <= 114 milliseconds
+100.00% <= 114 milliseconds
+28538.81 requests per second
+
+====== GET ======
+100000 requests completed in 3.42 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+50.05% <= 1 milliseconds
+86.45% <= 2 milliseconds
+96.77% <= 3 milliseconds
+99.32% <= 4 milliseconds
+99.64% <= 5 milliseconds
+99.82% <= 6 milliseconds
+99.92% <= 7 milliseconds
+99.95% <= 8 milliseconds
+99.96% <= 9 milliseconds
+99.97% <= 10 milliseconds
+99.98% <= 11 milliseconds
+99.98% <= 12 milliseconds
+99.99% <= 13 milliseconds
+100.00% <= 13 milliseconds
+29205.61 requests per second
+
+====== INCR ======
+100000 requests completed in 3.23 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+60.60% <= 1 milliseconds
+89.83% <= 2 milliseconds
+98.03% <= 3 milliseconds
+99.72% <= 4 milliseconds
+99.95% <= 5 milliseconds
+99.97% <= 7 milliseconds
+99.97% <= 8 milliseconds
+99.99% <= 9 milliseconds
+99.99% <= 11 milliseconds
+99.99% <= 12 milliseconds
+100.00% <= 13 milliseconds
+100.00% <= 15 milliseconds
+100.00% <= 15 milliseconds
+30978.94 requests per second
+
+
+C:\Users\Allen>redis-benchmark -p 9012
+====== PING_INLINE ======
+100000 requests completed in 6.71 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+1.55% <= 1 milliseconds
+75.59% <= 2 milliseconds
+98.71% <= 3 milliseconds
+99.81% <= 4 milliseconds
+99.95% <= 5 milliseconds
+99.99% <= 6 milliseconds
+100.00% <= 7 milliseconds
+14900.91 requests per second
+
+====== PING_BULK ======
+100000 requests completed in 5.08 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+23.68% <= 1 milliseconds
+92.73% <= 2 milliseconds
+99.65% <= 3 milliseconds
+99.98% <= 4 milliseconds
+100.00% <= 4 milliseconds
+19696.67 requests per second
+
+====== SET ======
+100000 requests completed in 5.20 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+11.24% <= 1 milliseconds
+99.43% <= 2 milliseconds
+100.00% <= 3 milliseconds
+100.00% <= 3 milliseconds
+19241.87 requests per second
+
+====== GET ======
+100000 requests completed in 4.75 seconds
+50 parallel clients
+3 bytes payload
+keep alive: 1
+
+23.89% <= 1 milliseconds
+99.25% <= 2 milliseconds
+100.00% <= 3 milliseconds
+100.00% <= 3 milliseconds
+21057.06 requests per second

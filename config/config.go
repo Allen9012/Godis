@@ -159,6 +159,7 @@ func SetupConfig(configFilename string) {
 	Properties = parse(file)
 }
 
+/* --- 							---*/
 var (
 	defaultHost           = "127.0.0.1"
 	defaultPort           = 9012

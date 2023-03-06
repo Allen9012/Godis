@@ -1,7 +1,7 @@
 /**
   @author: Allen
   @since: 2023/2/28
-  @desc: //flushdb
+  @desc: //flushdb 需要广播
 **/
 package cluster
 

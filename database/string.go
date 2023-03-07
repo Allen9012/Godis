@@ -7,12 +7,14 @@ package database
 
 import (
 	"Gedis/aof"
+	"Gedis/datastruct/bitmap"
 	"Gedis/interface/database"
 	"Gedis/interface/resp"
 	"Gedis/lib/logger"
 	"Gedis/lib/utils"
 	"Gedis/resp/reply"
 	"github.com/shopspring/decimal"
+	"math/bits"
 	"strconv"
 	"strings"
 	"time"
@@ -40,19 +42,24 @@ func init() {
 	RegisterCommand("GetEx", execGetEX, -2)
 	// SETEX key seconds value
 	RegisterCommand("SetEx", execSetEX, 4)
-	// INCR key
+	// INCR associated
 	RegisterCommand("Incr", execIncr, 2)
-	// INCRBY key increment
 	RegisterCommand("IncrBy", execIncrBy, 3)
 	RegisterCommand("IncrByFloat", execIncrByFloat, 3)
 	RegisterCommand("Decr", execDecr, 2)
 	RegisterCommand("DecrBy", execDecrBy, 3)
-
+	// APPEND key value
+	RegisterCommand("Append", execAppend, 3)
+	// BitMap
+	RegisterCommand("SetBit", execSetBit, 4)
+	RegisterCommand("GetBit", execGetBit, 3)
+	RegisterCommand("BitCount", execBitCount, -2)
+	RegisterCommand("BitPos", execBitPos, -3)
 }
 
 //
 // getAsString
-//  @Description: 简化操作提取公共方法
+//  @Description: key取出bytes字节
 //  @receiver db
 //  @param key
 //  @return []byte
@@ -68,6 +75,227 @@ func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
 		return nil, &reply.WrongTypeErrReply{}
 	}
 	return bytes, nil
+}
+
+/* --- BitMap ---*/
+
+//
+// execBitPos
+//  @Description: BITPOS key bit [start [end [BYTE | BIT]]]
+//  @param db
+//  @param args
+//  @return resp.Reply
+//  Return the position of the first bit set to 1 or 0 in a string.
+func execBitPos(db *DB, args [][]byte) resp.Reply {
+	// 1. 拿到对应的value字节
+	// 2. 选择模式
+	key := string(args[0])
+	bs, err := db.getAsString(key)
+	if err != nil {
+		return err
+	}
+	if bs == nil {
+		return reply.MakeIntReply(-1)
+	}
+	valStr := string(args[1])
+	var v byte
+	if valStr == "1" {
+		v = 1
+	} else if valStr == "0" {
+		v = 0
+	} else {
+		return reply.MakeErrReply("ERR bit is not an integer or out of range")
+	}
+	byteMode := true
+	if len(args) > 4 {
+		mode := strings.ToLower(string(args[4]))
+		if mode == "bit" {
+			byteMode = false
+		} else if mode == "byte" {
+			byteMode = true
+		} else {
+			return reply.MakeErrReply("ERR syntax error")
+		}
+	}
+	var size int64
+	bm := bitmap.FromBytes(bs)
+	if byteMode {
+		size = int64(len(*bm))
+	} else {
+		size = int64(bm.BitSize())
+	}
+	var beg, end int
+	if len(args) > 2 {
+		var err2 error
+		var startIdx, endIdx int64
+		startIdx, err2 = strconv.ParseInt(string(args[2]), 10, 64)
+		if err2 != nil {
+			return reply.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		endIdx, err2 = strconv.ParseInt(string(args[3]), 10, 64)
+		if err2 != nil {
+			return reply.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		beg, end = utils.ConvertRange(startIdx, endIdx, size)
+		if beg < 0 {
+			return reply.MakeIntReply(0)
+		}
+	}
+	if byteMode {
+		beg *= 8
+		end *= 8
+	}
+	var offset = int64(-1)
+	bm.ForEachBit(int64(beg), int64(end), func(ofs int64, val byte) bool {
+		if val == v {
+			offset = ofs
+			return false
+		}
+		return true
+	})
+	return reply.MakeIntReply(offset)
+}
+
+//
+// execBitCount
+//  @Description: BITCOUNT key [start end [BYTE | BIT]]
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execBitCount(db *DB, args [][]byte) resp.Reply {
+	// 1. 拿到key和对应的模式
+	// 2. 拿到起点和终点
+	// 3. 拿到size 转化成切片的size
+	// 4. 根据模式来计算count返回
+	key := string(args[0])
+	bs, err := db.getAsString(key)
+	if err != nil {
+		return err
+	}
+	if bs == nil {
+		return reply.MakeIntReply(0)
+	}
+	byteMode := true
+	if len(args) > 3 {
+		mode := strings.ToLower(string(args[3]))
+		if mode == "bit" {
+			byteMode = false
+		} else if mode == "byte" {
+		} else {
+			return reply.MakeSyntaxErrReply()
+		}
+	}
+	var size int64
+	bm := bitmap.FromBytes(bs)
+	if byteMode {
+		size = int64(len(*bm))
+	} else {
+		size = int64(bm.BitSize())
+	}
+	var begin, end int
+	if len(args) > 1 {
+		var err2 error
+		var startIdx, endIdx int64
+		startIdx, err2 = strconv.ParseInt(string(args[1]), 10, 64)
+		if err2 != nil {
+			return reply.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		endIdx, err2 = strconv.ParseInt(string(args[2]), 10, 64)
+		if err2 != nil {
+			return reply.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		begin, end = utils.ConvertRange(startIdx, endIdx, size)
+		if begin < 0 {
+			return reply.MakeIntReply(0)
+		}
+	}
+	var count int64
+	if byteMode {
+		bm.ForEachByte(begin, end, func(offset int64, val byte) bool {
+			count += int64(bits.OnesCount8(val))
+			return true
+		})
+	} else {
+		bm.ForEachBit(int64(begin), int64(end), func(offset int64, val byte) bool {
+			if val > 0 {
+				count++
+			}
+			return true
+		})
+	}
+	return reply.MakeIntReply(count)
+}
+
+//
+// execGetBit
+//  @Description: GETBIT key offset
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execGetBit(db *DB, args [][]byte) resp.Reply {
+	// 1. 拿出key，获取offset
+	// 2. 拿出value
+	// 4. value转换成bitmap
+	// 3. 返回
+	key := string(args[0])
+	offset, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR bit offset is not an integer or out of range")
+	}
+	bs, errorReply := db.getAsString(key)
+	if errorReply != nil {
+		return errorReply
+	}
+	if bs == nil {
+		return reply.MakeIntReply(0)
+	}
+	bm := bitmap.FromBytes(bs)
+	return reply.MakeIntReply(int64(bm.GetBit(offset)))
+}
+
+//
+// execSetBit
+//  @Description: SETBIT key offset value
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execSetBit(db *DB, args [][]byte) resp.Reply {
+	// 1. 拿出key，获取偏移，和设置的值
+	// 2. key找出value
+	// 3. value转换成bitmap
+	// 4. 修改
+	key := string(args[0])
+	offset, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR bit offset is not an integer or out of range")
+	}
+	valStr := string(args[2])
+	var set_val byte
+	if valStr == "1" {
+		set_val = 1
+	} else if valStr == "0" {
+		set_val = 0
+	} else {
+		return reply.MakeErrReply("ERR bit is not an integer or out of range")
+	}
+	bs, errorReply := db.getAsString(key)
+	if errorReply != nil {
+		return errorReply
+	}
+	bm := bitmap.FromBytes(bs)
+	// 先取出历史值
+	former := bm.GetBit(offset)
+	bm.SetBit(offset, set_val)
+	db.PutEntity(key, &database.DataEntity{
+		Data: bm.ToBytes(),
+	})
+	// aof操作
+	db.addAof(utils.ToCmdLine3("setBit", args...))
+	// 返回历史值
+	return reply.MakeIntReply(int64(former))
 }
 
 // execGet returns string value bound to the given key
@@ -428,4 +656,23 @@ func execDecrBy(db *DB, args [][]byte) resp.Reply {
 	})
 	db.addAof(utils.ToCmdLine3("decrby", args...))
 	return reply.MakeIntReply(-delta)
+}
+
+//
+// execAppend
+//  @Description: APPEND key value
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execAppend(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	bytes, errReply := db.getAsString(key)
+	if errReply != nil {
+		return errReply
+	}
+	bytes = append(bytes, args[1]...)
+	db.PutEntity(key, &database.DataEntity{Data: bytes})
+	db.addAof(utils.ToCmdLine3("append", args...))
+	return reply.MakeIntReply(int64(len(bytes)))
 }

@@ -60,37 +60,7 @@ keep alive: 1
 100.00% <= 21 milliseconds
 19327.41 requests per second
 
-====== PING_BULK ======
-100000 requests completed in 4.63 seconds
-50 parallel clients
-3 bytes payload
-keep alive: 1
 
-24.18% <= 1 milliseconds
-83.60% <= 2 milliseconds
-94.63% <= 3 milliseconds
-98.14% <= 4 milliseconds
-99.21% <= 5 milliseconds
-99.65% <= 6 milliseconds
-99.84% <= 7 milliseconds
-99.90% <= 8 milliseconds
-99.92% <= 9 milliseconds
-99.94% <= 10 milliseconds
-99.95% <= 11 milliseconds
-99.95% <= 12 milliseconds
-99.96% <= 13 milliseconds
-99.96% <= 14 milliseconds
-99.97% <= 15 milliseconds
-99.97% <= 16 milliseconds
-99.97% <= 17 milliseconds
-99.98% <= 18 milliseconds
-99.98% <= 19 milliseconds
-99.99% <= 20 milliseconds
-99.99% <= 21 milliseconds
-100.00% <= 22 milliseconds
-100.00% <= 23 milliseconds
-100.00% <= 24 milliseconds
-21584.29 requests per second
 
 ====== SET ======
 100000 requests completed in 3.50 seconds
@@ -166,34 +136,6 @@ keep alive: 1
 
 
 C:\Users\Allen>redis-benchmark -p 9012
-====== PING_INLINE ======
-100000 requests completed in 6.71 seconds
-50 parallel clients
-3 bytes payload
-keep alive: 1
-
-1.55% <= 1 milliseconds
-75.59% <= 2 milliseconds
-98.71% <= 3 milliseconds
-99.81% <= 4 milliseconds
-99.95% <= 5 milliseconds
-99.99% <= 6 milliseconds
-100.00% <= 7 milliseconds
-14900.91 requests per second
-
-====== PING_BULK ======
-100000 requests completed in 5.08 seconds
-50 parallel clients
-3 bytes payload
-keep alive: 1
-
-23.68% <= 1 milliseconds
-92.73% <= 2 milliseconds
-99.65% <= 3 milliseconds
-99.98% <= 4 milliseconds
-100.00% <= 4 milliseconds
-19696.67 requests per second
-
 ====== SET ======
 100000 requests completed in 5.20 seconds
 50 parallel clients

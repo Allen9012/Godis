@@ -58,6 +58,10 @@ func (r *EmptyMultiBulkReply) ToBytes() []byte {
 	return emptyMultiBulkBytes
 }
 
+func MakeEmptyMultiBulkReply() *EmptyMultiBulkReply {
+	return &EmptyMultiBulkReply{}
+}
+
 // NoReply respond nothing, for commands like subscribe
 type NoReply struct{}
 

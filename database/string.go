@@ -20,6 +20,14 @@ import (
 	"time"
 )
 
+// 设置TTL
+const unlimitedTTL int64 = 0
+const (
+	upsertPolicy = iota // default
+	insertPolicy        // set nx
+	updatePolicy        // set ex
+)
+
 //GET
 //SET
 //SETNX
@@ -315,9 +323,6 @@ func execGet(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeBulkReply(bytes)
 }
 
-// 设置TTL
-const unlimitedTTL int64 = 0
-
 //
 //	execGetEX Get the value of key and optionally set its expiration
 //  @Description: 注意需要考虑ttl
@@ -404,17 +409,104 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeBulkReply(bytes)
 }
 
+//
 // execSet sets string value and time to live to the given key
+//  @Description: 增加set的ttl操作
+//  @param db
+//  @param args
+//  @return resp.Reply
+//  SET key value [NX | XX] [GET] [EX seconds | PX milliseconds |
+//  EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL]
+//
 func execSet(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	value := args[1]
+	policy := upsertPolicy
+	ttl := unlimitedTTL
+	// parse options
+	if len(args) > 2 {
+		for i := 2; i < len(args); i++ {
+			arg := strings.ToUpper(string(args[i]))
+			if arg == "NX" { //insert
+				if policy == updatePolicy {
+					return reply.MakeSyntaxErrReply()
+				}
+				policy = insertPolicy
+			} else if arg == "XX" { // update policy
+				if policy == insertPolicy {
+					return reply.MakeSyntaxErrReply()
+				}
+				policy = updatePolicy
+			} else if arg == "EX" { // ttl in seconds
+				if ttl != unlimitedTTL {
+					// ttl has been set
+					return reply.MakeSyntaxErrReply()
+				}
+				if i+1 >= len(args) {
+					return reply.MakeSyntaxErrReply()
+				}
+				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
+				if err != nil {
+					return reply.MakeSyntaxErrReply()
+				}
+				if ttlArg <= 0 {
+					return reply.MakeErrReply("ERR invalid expire time in set")
+				}
+				ttl = ttlArg * 1000
+				i++ // skip next arg
+			} else if arg == "PX" {
+				if ttl != unlimitedTTL {
+					return reply.MakeSyntaxErrReply()
+				}
+				if i+1 >= len(args) {
+					return reply.MakeSyntaxErrReply()
+				}
+				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
+				if err != nil {
+					return reply.MakeSyntaxErrReply()
+				}
+				if ttlArg <= 0 {
+					return reply.MakeErrReply("ERR invalid expire time in set")
+				}
+				ttl = ttlArg
+				i++ // skip
+			} else {
+				return reply.MakeErrReply("ERR invalid expire time in set")
+			}
+		}
+	}
 	entity := &database.DataEntity{
 		Data: value,
 	}
-	db.PutEntity(key, entity)
-	//aof
-	db.addAof(utils.ToCmdLine3("set", args...))
-	return reply.MakeOkReply()
+	var result int
+	switch policy {
+	case upsertPolicy:
+		db.PutEntity(key, entity)
+		result = 1
+	case insertPolicy:
+		result = db.PutIfAbsent(key, entity)
+	case updatePolicy:
+		result = db.PutIfExists(key, entity)
+	}
+	if result > 0 {
+		if ttl != unlimitedTTL {
+			expireTime := time.Now().Add(time.Duration(ttl) * time.Millisecond)
+			db.Expire(key, expireTime)
+			db.addAof(CmdLine{
+				[]byte("SET"),
+				args[0],
+				args[1],
+			})
+			db.addAof(aof.MakeExpireCmd(key, expireTime).Args)
+		} else {
+			db.Persist(key) // override ttl
+			db.addAof(utils.ToCmdLine3("set", args...))
+		}
+	}
+	if result > 0 {
+		return reply.MakeOkReply()
+	}
+	return reply.MakeNullBulkReply()
 }
 
 // execSetNX sets string if not exists

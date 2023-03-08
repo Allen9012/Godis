@@ -6,10 +6,13 @@
 package database
 
 import (
+	"Gedis/aof"
 	"Gedis/interface/resp"
 	"Gedis/lib/utils"
 	"Gedis/lib/wildcard"
 	"Gedis/resp/reply"
+	"strconv"
+	"time"
 )
 
 func init() {
@@ -27,6 +30,161 @@ func init() {
 	RegisterCommand("Rename", execRename, 3)
 	//RENAMENX key newkey
 	RegisterCommand("RenameNx", execRenameNx, 3)
+
+	RegisterCommand("RenameNx", execRenameNx, 3)
+	RegisterCommand("Expire", execExpire, 3)
+	RegisterCommand("ExpireAt", execExpireAt, 3)
+	RegisterCommand("ExpireTime", execExpireTime, 2)
+	RegisterCommand("TTL", execTTL, 2)
+	RegisterCommand("Persist", execPersist, 2)
+	RegisterCommand("PTTL", execPTTL, 2)
+}
+
+/*--- TTL 相关---*/
+
+//
+// execPTTL
+//  @Description: PTTL key
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execPTTL(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(-2)
+	}
+
+	raw, exists := db.ttlMap.Get(key)
+	if !exists {
+		return reply.MakeIntReply(-1)
+	}
+	expireTime, _ := raw.(time.Time)
+	ttl := expireTime.Sub(time.Now())
+	return reply.MakeIntReply(int64(ttl / time.Millisecond))
+}
+
+//
+// execPersist
+//  @Description:PERSIST key
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execPersist(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	_, exists = db.ttlMap.Get(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	db.Persist(key)
+	db.addAof(utils.ToCmdLine3("persist", args...))
+	return reply.MakeIntReply(1)
+}
+
+//
+// execExpireTime
+//  @Description: EXPIRETIME key
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execExpireTime(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(-2)
+	}
+
+	raw, exists := db.ttlMap.Get(key)
+	if !exists {
+		return reply.MakeIntReply(-1)
+	}
+	rawExpireTime, _ := raw.(time.Time)
+	expireTime := rawExpireTime.Unix()
+	return reply.MakeIntReply(expireTime)
+}
+
+//
+// execExpireAt
+//  @Description: EXPIREAT key unix-time-seconds [NX | XX | GT | LT]
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execExpireAt(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+
+	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	expireAt := time.Unix(raw, 0)
+
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	db.Expire(key, expireAt)
+	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
+	return reply.MakeIntReply(1)
+}
+
+//
+// execExpire
+//  @Description: EXPIRE key seconds [NX | XX | GT | LT]
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execExpire(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+
+	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	ttl := time.Duration(ttlArg) * time.Second
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	expireAt := time.Now().Add(ttl)
+	db.Expire(key, expireAt)
+	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
+	return reply.MakeIntReply(1)
+}
+
+//
+// execTTL returns a key's time to live in seconds
+//  @Description: TTL key
+//  @param db
+//  @param args
+//  @return resp.Reply
+//
+func execTTL(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(-2)
+	}
+
+	raw, exists := db.ttlMap.Get(key)
+	if !exists {
+		return reply.MakeIntReply(-1)
+	}
+	expireTime, _ := raw.(time.Time)
+	ttl := expireTime.Sub(time.Now())
+	return reply.MakeIntReply(int64(ttl / time.Second))
 }
 
 //DEL

@@ -51,6 +51,7 @@ func makeDB() *DB {
 		addAof: func(line CmdLine) {},
 		// 初始化map 赋值一个SyncMap
 		ttlMap: dict.MakeSyncDict(),
+		locker: lock.Make(lockerSize),
 	}
 	return db
 }

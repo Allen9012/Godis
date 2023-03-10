@@ -7,7 +7,7 @@ package bitmap
 
 type BitMap []byte
 
-func NewBitMap() *BitMap {
+func New() *BitMap {
 	b := BitMap(make([]byte, 0))
 	return &b
 }

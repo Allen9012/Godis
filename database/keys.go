@@ -38,6 +38,65 @@ func init() {
 	RegisterCommand("TTL", execTTL, 2)
 	RegisterCommand("Persist", execPersist, 2)
 	RegisterCommand("PTTL", execPTTL, 2)
+	RegisterCommand("PExpire", execPExpire, 3)
+	RegisterCommand("PExpireAt", execPExpireAt, 3)
+	RegisterCommand("PExpireTime", execPExpireTime, 2)
+}
+
+func execPExpireTime(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(-2)
+	}
+
+	raw, exists := db.ttlMap.Get(key)
+	if !exists {
+		return reply.MakeIntReply(-1)
+	}
+	rawExpireTime, _ := raw.(time.Time)
+	expireTime := rawExpireTime.UnixMilli()
+	return reply.MakeIntReply(expireTime)
+}
+
+func execPExpireAt(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+
+	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	expireAt := time.Unix(0, raw*int64(time.Millisecond))
+
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	db.Expire(key, expireAt)
+
+	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
+	return reply.MakeIntReply(1)
+}
+
+func execPExpire(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+
+	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return reply.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	ttl := time.Duration(ttlArg) * time.Millisecond
+
+	_, exists := db.GetEntity(key)
+	if !exists {
+		return reply.MakeIntReply(0)
+	}
+
+	expireAt := time.Now().Add(ttl)
+	db.Expire(key, expireAt)
+	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
+	return reply.MakeIntReply(1)
 }
 
 /*--- TTL 相关---*/
@@ -260,16 +319,22 @@ func execRename(db *DB, args [][]byte) resp.Reply {
 	if len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rename' command")
 	}
-
 	src := string(args[0])
 	dest := string(args[1])
+
 	entity, ok := db.GetEntity(src)
 	if !ok {
 		return reply.MakeErrReply("no such key")
 	}
+	rawTTL, hasTTL := db.ttlMap.Get(src)
 	db.PutEntity(dest, entity)
 	db.Remove(src)
-	//aof
+	if hasTTL {
+		db.Persist(src) // clean src and dest with their ttl
+		db.Persist(dest)
+		expireTime, _ := rawTTL.(time.Time)
+		db.Expire(dest, expireTime)
+	}
 	db.addAof(utils.ToCmdLine3("rename", args...))
 	return reply.MakeOkReply()
 }
@@ -295,8 +360,15 @@ func execRenameNx(db *DB, args [][]byte) resp.Reply {
 	if !ok { // 找不到原来的key
 		return reply.MakeErrReply("no such key")
 	}
-	db.Remove(src)
+	rawTTL, hasTTL := db.ttlMap.Get(src)
+	db.Removes(src)
 	db.PutEntity(dest, entity)
+	if hasTTL {
+		db.Persist(src) // clean src and dest with their ttl
+		db.Persist(dest)
+		expireTime, _ := rawTTL.(time.Time)
+		db.Expire(dest, expireTime)
+	}
 	//aof
 	db.addAof(utils.ToCmdLine3("renamenx", args...))
 	return reply.MakeIntReply(1)

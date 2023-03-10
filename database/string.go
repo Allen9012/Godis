@@ -50,6 +50,8 @@ func init() {
 	RegisterCommand("GetEx", execGetEX, -2)
 	// SETEX key seconds value
 	RegisterCommand("SetEx", execSetEX, 4)
+
+	RegisterCommand("GetDel", execGetDel, 2)
 	// INCR associated
 	RegisterCommand("Incr", execIncr, 2)
 	RegisterCommand("IncrBy", execIncrBy, 3)
@@ -281,28 +283,23 @@ func execSetBit(db *DB, args [][]byte) resp.Reply {
 		return reply.MakeErrReply("ERR bit offset is not an integer or out of range")
 	}
 	valStr := string(args[2])
-	var set_val byte
+	var v byte
 	if valStr == "1" {
-		set_val = 1
+		v = 1
 	} else if valStr == "0" {
-		set_val = 0
+		v = 0
 	} else {
 		return reply.MakeErrReply("ERR bit is not an integer or out of range")
 	}
-	bs, errorReply := db.getAsString(key)
-	if errorReply != nil {
-		return errorReply
+	bs, errReply := db.getAsString(key)
+	if errReply != nil {
+		return errReply
 	}
 	bm := bitmap.FromBytes(bs)
-	// 先取出历史值
 	former := bm.GetBit(offset)
-	bm.SetBit(offset, set_val)
-	db.PutEntity(key, &database.DataEntity{
-		Data: bm.ToBytes(),
-	})
-	// aof操作
+	bm.SetBit(offset, v)
+	db.PutEntity(key, &database.DataEntity{Data: bm.ToBytes()})
 	db.addAof(utils.ToCmdLine3("setBit", args...))
-	// 返回历史值
 	return reply.MakeIntReply(int64(former))
 }
 
@@ -357,11 +354,11 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 				return reply.MakeSyntaxErrReply()
 			}
 			// 拿到ttl的时间
-			ttlArg, err := strconv.ParseInt(string(arg[i+1]), 10, 64)
+			ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 			if err != nil {
 				return reply.MakeSyntaxErrReply()
 			}
-			if ttlArg < 0 {
+			if ttlArg <= 0 {
 				return reply.MakeErrReply("ERR invalid expire time in getex")
 			}
 			ttl = ttlArg * 1000
@@ -376,16 +373,16 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 				return reply.MakeSyntaxErrReply()
 			}
 			// 拿到ttl的时间
-			ttlArg, err := strconv.ParseInt(string(arg[i+1]), 10, 64)
+			ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 			if err != nil {
 				return reply.MakeSyntaxErrReply()
 			}
-			if ttlArg < 0 {
+			if ttlArg <= 0 {
 				return reply.MakeErrReply("ERR invalid expire time in getex")
 			}
 			ttl = ttlArg
 			i++ // skip next arg
-		} else if arg == "PERSIST" {
+		} else if arg == "persist" {
 			if ttl != unlimitedTTL { // PERSIST Cannot be used with EX | PX
 				return reply.MakeSyntaxErrReply()
 			}
@@ -509,6 +506,24 @@ func execSet(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeNullBulkReply()
 }
 
+// execGetDel Get the value of key and delete the key.
+func execGetDel(db *DB, args [][]byte) resp.Reply {
+	key := string(args[0])
+
+	old, err := db.getAsString(key)
+	if err != nil {
+		return err
+	}
+	if old == nil {
+		return reply.MakeNullBulkReply()
+	}
+	db.Remove(key)
+
+	// We convert to del command to write aof
+	db.addAof(utils.ToCmdLine3("del", args...))
+	return reply.MakeBulkReply(old)
+}
+
 // execSetNX sets string if not exists
 func execSetNX(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
@@ -560,29 +575,32 @@ func execSetEX(db *DB, args [][]byte) resp.Reply {
 func execGetSet(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	value := args[1]
-	entity := &database.DataEntity{
-		Data: value,
-	}
-	entity, exists := db.GetEntity(key)
-	if !exists {
-		return reply.MakeNullBulkReply()
+	old, err := db.getAsString(key)
+	if err != nil {
+		return err
 	}
 	db.PutEntity(key, &database.DataEntity{
 		Data: value,
 	})
+	db.Persist(key) // override ttl
 	//aof
-	db.addAof(utils.ToCmdLine3("getset", args...))
-	return reply.MakeBulkReply(entity.Data.([]byte))
+	db.addAof(utils.ToCmdLine3("set", args...))
+	if old == nil {
+		return reply.MakeNullBulkReply()
+	}
+	return reply.MakeBulkReply(old)
 }
 
 // execStrLen returns len of string value bound to the given key
 func execStrLen(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
-	entity, exists := db.GetEntity(key)
-	if !exists {
-		return reply.MakeNullBulkReply()
+	bytes, err := db.getAsString(key)
+	if err != nil {
+		return err
 	}
-	bytes := entity.Data.([]byte)
+	if bytes == nil {
+		return reply.MakeIntReply(0)
+	}
 	return reply.MakeIntReply(int64(len(bytes)))
 }
 

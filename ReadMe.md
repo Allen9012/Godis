@@ -36,32 +36,12 @@ memcached hashtable：
 
 
 BenchMark测试记录（当前只有支持测试的命令只有3/4个）
-
-====== PING_INLINE ======
-100000 requests completed in 5.17 seconds
-50 parallel clients
-3 bytes payload
-keep alive: 1
-
-9.10% <= 1 milliseconds
-66.49% <= 2 milliseconds
-86.21% <= 3 milliseconds
-95.69% <= 4 milliseconds
-98.88% <= 5 milliseconds
-99.63% <= 6 milliseconds
-99.83% <= 7 milliseconds
-99.94% <= 8 milliseconds
-99.97% <= 9 milliseconds
-99.97% <= 10 milliseconds
-99.98% <= 18 milliseconds
-99.98% <= 19 milliseconds
-99.99% <= 20 milliseconds
-100.00% <= 21 milliseconds
-100.00% <= 21 milliseconds
-19327.41 requests per second
-
-
-
+Redis
+SET: 3.50s/100000q  28538.81
+GET: 3.42s/100000q  29205.61
+Gedis 
+SET: 5.20/100000q   19241.87
+GET: 4.75/100000q   21057.06
 ====== SET ======
 100000 requests completed in 3.50 seconds
 50 parallel clients

@@ -74,7 +74,6 @@ func TestPush(t *testing.T) {
 		t.Error("push error")
 	}
 	testDB.Remove(key)
-
 	// left push multi
 	key = utils.RandString(10)
 	args = make([]string, size+1)
@@ -85,7 +84,7 @@ func TestPush(t *testing.T) {
 		args[i+1] = value
 		expectedValues[size-i-1] = []byte(value)
 	}
-	result = execLPush(testDB, values)
+	//result = execLPush(testDB, values)
 	result = testDB.Exec(nil, utils.ToCmdLine2("lpush", args...))
 	if intResult, _ := result.(*reply.IntReply); intResult.Code != int64(size) {
 		t.Error(fmt.Sprintf("expected %d, actually %d", size, intResult.Code))
@@ -162,7 +161,6 @@ func TestLIndex(t *testing.T) {
 		testDB.Exec(nil, utils.ToCmdLine("rpush", key, value))
 		values[i] = []byte(value)
 	}
-
 	result := testDB.Exec(nil, utils.ToCmdLine("llen", key))
 	if intResult, _ := result.(*reply.IntReply); intResult.Code != int64(size) {
 		t.Error(fmt.Sprintf("expected %d, actually %d", size, intResult.Code))
@@ -455,7 +453,7 @@ func TestUndoRPop(t *testing.T) {
 func TestUndoRPopLPush(t *testing.T) {
 	testDB.Flush()
 	key1 := utils.RandString(10)
-	key2 := utils.RandString(10)
+	key2 := utils.RandString(11)
 	value := utils.RandString(10)
 	testDB.Exec(nil, utils.ToCmdLine("lpush", key1, value))
 

@@ -38,7 +38,7 @@ func (db *DB) getAsList(key string) (List.List, reply.ErrorReply) {
 	}
 	list, ok := entity.Data.(List.List)
 	if !ok {
-		return nil, &reply.WrongTypeErrReply{}
+		return nil, reply.MakeWrongTypeErrReply()
 	}
 	return list, nil
 }
@@ -86,7 +86,7 @@ func execLRange(db *DB, args [][]byte) resp.Reply {
 		return reply.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	start := int(start64)
-	stop64, err := strconv.ParseInt(string(args[1]), 10, 64)
+	stop64, err := strconv.ParseInt(string(args[2]), 10, 64)
 	if err != nil {
 		return reply.MakeErrReply("ERR value is not an integer or out of range")
 	}
@@ -170,6 +170,7 @@ func execLSet(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeOkReply()
 }
 
+//LSET key index element
 func undoLSet(db *DB, args [][]byte) []CmdLine {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -204,7 +205,7 @@ func undoLSet(db *DB, args [][]byte) []CmdLine {
 }
 
 //
-//  Returns the element at index index in the list stored at key.
+//  Returns the element at index in the list stored at key.
 //  @Description: LINDEX key index
 //  @param db
 //  @param args
@@ -223,7 +224,7 @@ func execLIndex(db *DB, args [][]byte) resp.Reply {
 	if errReply != nil {
 		return errReply
 	}
-	if list != nil {
+	if list == nil {
 		return reply.MakeNullBulkReply()
 	}
 
@@ -294,15 +295,15 @@ func execLRem(db *DB, args [][]byte) resp.Reply {
 
 	var removed int
 	if count == 0 {
-		list.RemoveAllByVal(func(a interface{}) bool {
+		removed = list.RemoveAllByVal(func(a interface{}) bool {
 			return utils.Equals(a, value)
 		})
 	} else if count > 0 {
-		list.RemoveByVal(func(a interface{}) bool {
+		removed = list.RemoveByVal(func(a interface{}) bool {
 			return utils.Equals(a, value)
 		}, count)
 	} else {
-		list.ReverseRemoveByVal(func(a interface{}) bool {
+		removed = list.ReverseRemoveByVal(func(a interface{}) bool {
 			return utils.Equals(a, value)
 		}, -count)
 	}
@@ -473,7 +474,7 @@ func undoLPop(db *DB, args [][]byte) []CmdLine {
 }
 
 //
-// execRPushX
+//  Inserts specified values at the tail of the list stored at key, only if key already exists and holds a list
 //  @Description: RPUSHX key element [element ...]
 //  @param db
 //  @param args
@@ -488,7 +489,7 @@ func execRPushX(db *DB, args [][]byte) resp.Reply {
 	values := args[1:]
 
 	// get or init entity
-	list, _, errReply := db.getOrInitList(key)
+	list, errReply := db.getAsList(key)
 	if errReply != nil {
 		return errReply
 	}

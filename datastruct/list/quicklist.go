@@ -25,9 +25,10 @@ type iterator struct {
 }
 
 func NewQuickList() *QuickList {
-	return &QuickList{
+	l := &QuickList{
 		data: list.New(),
 	}
+	return l
 }
 
 /*--- iterator ---*/
@@ -269,7 +270,7 @@ func (ql *QuickList) Insert(index int, val interface{}) {
 	}
 	// insert into a full page may cause memory copy, so we split a full page into two half pages
 	var nextPage []interface{}
-	nextPage = append(nextPage, page[pageSize/2:]) // pageSize must be even
+	nextPage = append(nextPage, page[pageSize/2:]...) // pageSize must be even
 	page = page[:pageSize/2]
 	if iter.offset < len(page) {
 		page = append(page[:iter.offset+1], page[iter.offset:]...)

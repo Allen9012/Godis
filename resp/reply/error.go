@@ -71,6 +71,11 @@ func (r *WrongTypeErrReply) Error() string {
 	return "WRONGTYPE Operation against a key holding the wrong kind of value"
 }
 
+// MakeWrongTypeErrReply creates syntax error
+func MakeWrongTypeErrReply() *WrongTypeErrReply {
+	return &WrongTypeErrReply{}
+}
+
 // ProtocolErr 接口协议错误
 
 // ProtocolErrReply represents meeting unexpected byte during parse requests

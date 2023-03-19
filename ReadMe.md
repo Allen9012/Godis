@@ -139,3 +139,38 @@ keep alive: 1
 100.00% <= 3 milliseconds
 100.00% <= 3 milliseconds
 21057.06 requests per second
+
+3/15
+更新BenchMark
+redis-benchmark -n 10000  -q
+PING_INLINE: 17857.14 requests per second
+PING_BULK: 18832.39 requests per second
+SET: 12360.94 requests per second
+GET: 17452.01 requests per second
+INCR: 18587.36 requests per second
+LPUSH: 18691.59 requests per second
+RPUSH: 20325.20 requests per second
+LPOP: 19230.77 requests per second
+RPOP: 19762.85 requests per second
+LPUSH (needed to benchmark LRANGE): 19801.98 requests per second
+LRANGE_100 (first 100 elements): 12936.61 requests per second
+LRANGE_300 (first 300 elements): 7479.43 requests per second
+LRANGE_500 (first 450 elements): 7575.76 requests per second
+LRANGE_600 (first 600 elements): 6211.18 requests per second
+
+
+redis-benchmark -p 9012 -n 10000  -q
+PING_INLINE: 12062.73 requests per second
+PING_BULK: 12300.12 requests per second
+SET: 12135.92 requests per second
+GET: 13774.10 requests per second
+INCR: 13227.51 requests per second
+LPUSH: 12787.72 requests per second
+RPUSH: 12091.90 requests per second
+LPOP: 12610.34 requests per second
+RPOP: 13568.52 requests per second
+LPUSH (needed to benchmark LRANGE): 16339.87 requests per second
+LRANGE_100 (first 100 elements): 12562.81 requests per second
+LRANGE_300 (first 300 elements): 7794.23 requests per second
+LRANGE_500 (first 450 elements): 6024.10 requests per second
+LRANGE_600 (first 600 elements): 5015.05 requests per second

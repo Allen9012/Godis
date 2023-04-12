@@ -116,3 +116,10 @@ func Fatal(v ...interface{}) {
 	setPrefix(FATAL)
 	logger.Fatalln(v...)
 }
+
+func Errorf(format string, v ...interface{}) {
+	mu.Lock()
+	defer mu.Unlock()
+	setPrefix(ERROR)
+	logger.Println(fmt.Sprintf(format, v...))
+}

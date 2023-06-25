@@ -16,6 +16,7 @@ import (
 	"strings"
 )
 
+/* --- GODIS 配置方式 ---*/
 const (
 	PORT                int    = 9012
 	MAX_CLIENTS         int    = 10000
@@ -47,28 +48,6 @@ type ServerProperties struct {
 	aofRewriteBuf      []byte //Hold changes during an AOF rewrite
 	aofAutoSyncBytes   int    `cfg:"aofAutoSyncBytes"`
 }
-type Config struct {
-	// flag新增字段
-	ConfFile          string
-	Port              int
-	Host              string
-	LogDir            string
-	LogLevel          string
-	ShardNum          int
-	ChanBufferSize    int
-	Databases         int
-	Others            map[string]any
-	ClusterConfigPath string
-	IsCluster         bool   `json:"IsCluster"`
-	PeerAddrs         string `json:"PeerAddrs"`
-	PeerIDs           string `json:"PeerIDs"`
-	RaftAddr          string `json:"RaftAddr"`
-	NodeID            int    `json:"NodeID"`
-	KVPort            int    `json:"KVPort"`
-	JoinCluster       bool   `json:"JoinCluster"`
-}
-
-var Configures *Config
 
 type CfgError struct {
 	message string
@@ -159,7 +138,7 @@ func SetupConfig(configFilename string) {
 	Properties = parse(file)
 }
 
-/* --- 							---*/
+/*	配置方式： Config方式	--》 GoRedis 方式*/
 var (
 	defaultHost           = "127.0.0.1"
 	defaultPort           = 9012
@@ -170,6 +149,31 @@ var (
 	configFile            = "./redis.conf"
 )
 
+// Configures 方便调用的变量
+var Configures *Config
+
+type Config struct {
+	// flag新增字段
+	ConfFile          string
+	Port              int
+	Host              string
+	LogDir            string
+	LogLevel          string
+	ShardNum          int
+	ChanBufferSize    int
+	Databases         int
+	Others            map[string]any
+	ClusterConfigPath string
+	IsCluster         bool   `json:"IsCluster"`
+	PeerAddrs         string `json:"PeerAddrs"`
+	PeerIDs           string `json:"PeerIDs"`
+	RaftAddr          string `json:"RaftAddr"`
+	NodeID            int    `json:"NodeID"`
+	KVPort            int    `json:"KVPort"`
+	JoinCluster       bool   `json:"JoinCluster"`
+}
+
+/* --- 			flag 启动参数提示				---*/
 func flagInit(cfg *Config) {
 	flag.StringVar(&(cfg.ConfFile), "config", configFile, "Appoint a config file: such as redis.conf")
 	flag.StringVar(&(cfg.Host), "host", defaultHost, "Bind host ip: default is 127.0.0.1")
@@ -189,7 +193,7 @@ func flagInit(cfg *Config) {
 //
 // Setup initialize configs and do some validation checking.
 // Return configured Config pointer and error.
-//  @Description: 尝试直接
+//  @Description: 初始化配置是默认配置。
 //  @param properties
 //  @return error
 //
@@ -205,16 +209,15 @@ func Setup() (*Config, error) {
 		Databases:         16,
 		Others:            make(map[string]any),
 		ClusterConfigPath: "",
-		IsCluster:         false,
-		PeerAddrs:         "",
-		RaftAddr:          "",
-		NodeID:            -1,
+		IsCluster:         false, // 默认不启动集群模式
+		PeerAddrs:         "",    // peer节点初始化地址
+		RaftAddr:          "",    // TODO raft节点初始化地址
+		NodeID:            -1,    // TODO raft模式
 		KVPort:            0,
 		JoinCluster:       false,
 	}
+	// init flag
 	flagInit(cfg)
-	// parse command line flags
-	flag.Parse()
 	// parse config file & checks
 	if cfg.ConfFile != "" {
 		if err := cfg.Parse(cfg.ConfFile); err != nil {
@@ -234,6 +237,8 @@ func Setup() (*Config, error) {
 			return nil, portErr
 		}
 	}
+	// parse command line flags 命令行配置优先级高
+	flag.Parse()
 	// cluster mode
 	if cfg.IsCluster {
 		if cfg.ClusterConfigPath == "" {
@@ -248,6 +253,8 @@ func Setup() (*Config, error) {
 	Configures = cfg
 	return cfg, nil
 }
+
+// ParseConfigJson is used to parse the config file of cluster in json format
 func (cfg *Config) ParseConfigJson(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -277,23 +284,23 @@ func (cfg *Config) Parse(cfgFile string) error {
 	}
 
 	defer func() {
-		err := fl.Close()
-		if err != nil {
+		if err := fl.Close(); err != nil {
 			fmt.Printf("Close config file error: %s \n", err.Error())
 		}
 	}()
 
 	reader := bufio.NewReader(fl)
+	// read config file line by line
 	for {
 		line, ioErr := reader.ReadString('\n')
 		if ioErr != nil && ioErr != io.EOF {
 			return ioErr
 		}
-
+		// 跳过注释
 		if len(line) > 0 && line[0] == '#' {
 			continue
 		}
-
+		// 去除空格，获取实际配置
 		fields := strings.Fields(line)
 		if len(fields) >= 2 {
 			cfgName := strings.ToLower(fields[0])
@@ -340,9 +347,11 @@ func (cfg *Config) Parse(cfgFile string) error {
 				cfg.Others[cfgName] = fields[1]
 			}
 		}
+		// 读取到文件末尾,跳出循环结束
 		if ioErr == io.EOF {
 			break
 		}
 	}
+	logger.Info("Config file parsed successfully. ")
 	return nil
 }

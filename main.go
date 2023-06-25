@@ -21,6 +21,7 @@ func fileExists(filename string) bool {
 }
 
 func main() {
+	print(banner)
 	logger.Setup(&logger.Settings{
 		Path:       "logs",
 		Name:       "godis",

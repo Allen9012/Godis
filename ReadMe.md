@@ -1,3 +1,10 @@
+## 配置方式和补充
+如果使用的方式是Config方式：
+如果配置了集群方式的话IsCluster = true，就需要给出ClusterConfigPath否则error，配置方式须为Json格式
+如果配置了集群，会读取RaftAddr，如果没有配置RaftAddr 默认读取PeerAddrs，如果开启了集群模式，默认database都是1，集群模式暂时只支持单base
+相对于配置文件命令行配置优先级高
+
+
 ## Resp协议
 RESP 定义了 5 种格式：
 

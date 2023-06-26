@@ -1,11 +1,11 @@
 package parser
 
 import (
-	"Gedis/interface/resp"
-	"Gedis/lib/logger"
-	"Gedis/resp/reply"
 	"bufio"
 	"errors"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/resp/reply"
 	"io"
 	"runtime/debug"
 	"strconv"
@@ -14,9 +14,8 @@ import (
 
 // PayLoad 客户端发送的数据
 //
-//  PayLoad
-//  @Description: 有数据就写到数据字段，反之则写到错误字段
-//
+//	PayLoad
+//	@Description: 有数据就写到数据字段，反之则写到错误字段
 type PayLoad struct {
 	// 服务端和客户交互的内容实际是类似的，都是reply
 	Data resp.Reply
@@ -156,15 +155,14 @@ func parse0(reader io.Reader, ch chan<- *PayLoad) {
 	}
 }
 
-//
 // readLine
-//  @Description: 一次读取一行
-//  @param bufreader
-//  @param state
-//  @return []byte	返回的类似$3\r\n
-//  @return bool	是否有IO错误
-//  @return error
 //
+//	@Description: 一次读取一行
+//	@param bufreader
+//	@param state
+//	@return []byte	返回的类似$3\r\n
+//	@return bool	是否有IO错误
+//	@return error
 func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 	//特殊情况： *3\r\n$3\r\n$7\r\n[k\r\ney]\r\n$5\r\nvalue\r\n
 	//1. \r\n切分行
@@ -195,13 +193,12 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 	return msg, false, nil
 }
 
-//
 // parseMultiBulkHeader
-//  @Description: readLine之后具体取出响应内容，解析多行响应内容
-//  @param msg
-//  @param state
-//  @return error	填充state
 //
+//	@Description: readLine之后具体取出响应内容，解析多行响应内容
+//	@param msg
+//	@param state
+//	@return error	填充state
 func parseMultiBulkHeader(msg []byte, state *readState) error {
 	var err error
 	var expectedLine uint64
@@ -224,13 +221,12 @@ func parseMultiBulkHeader(msg []byte, state *readState) error {
 	}
 }
 
-//
 // parseBulkHeader
-//  @Description: 解析单行数据
-//  @param msg
-//  @param state
-//  @return error
 //
+//	@Description: 解析单行数据
+//	@param msg
+//	@param state
+//	@return error
 func parseBulkHeader(msg []byte, state *readState) error {
 	var err error
 	state.bulkLen, err = strconv.ParseInt(string(msg[1:len(msg)-2]), 10, 64)
@@ -251,12 +247,13 @@ func parseBulkHeader(msg []byte, state *readState) error {
 }
 
 //	+Ok\r\n 	-err\r\n 	:5\r\n
-// parseSingleLineReply
-//  @Description: 客户端也可能发送状态 解析状态响应
-//  @param msg
-//  @return reply	得到reply类型 类似Ok
-//  @return err
 //
+// parseSingleLineReply
+//
+//	@Description: 客户端也可能发送状态 解析状态响应
+//	@param msg
+//	@return reply	得到reply类型 类似Ok
+//	@return err
 func parseSingleLineReply(msg []byte) (resp.Reply, error) {
 	str := strings.TrimSuffix(string(msg), "\r\n")
 	var result resp.Reply
@@ -283,14 +280,13 @@ func parseSingleLineReply(msg []byte) (resp.Reply, error) {
 	return result, nil
 }
 
-//	PING\r\n
+//		PING\r\n
 //
-// 	readBody
-//  @Description: 实际读出内容和解析 read the non-first lines of multi bulk reply or bulk reply
-//  @param msg	eg:$3
-//  @param state
-//  @return error
-//
+//		readBody
+//	 @Description: 实际读出内容和解析 read the non-first lines of multi bulk reply or bulk reply
+//	 @param msg	eg:$3
+//	 @param state
+//	 @return error
 func readBody(msg []byte, state *readState) error {
 	// 去掉\r\n
 	line := msg[0 : len(msg)-2]

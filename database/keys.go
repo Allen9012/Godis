@@ -1,16 +1,20 @@
-/**
-  @author: Allen
-  @since: 2023/2/26
-  @desc: //TODO
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/26
+	@desc: //TODO
+
+*
+*/
 package database
 
 import (
-	"Gedis/aof"
-	"Gedis/interface/resp"
-	"Gedis/lib/utils"
-	"Gedis/lib/wildcard"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/aof"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/lib/wildcard"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strconv"
 	"time"
 )
@@ -101,13 +105,12 @@ func execPExpire(db *DB, args [][]byte) resp.Reply {
 
 /*--- TTL 相关---*/
 
-//
 // execPTTL
-//  @Description: PTTL key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: PTTL key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execPTTL(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -124,13 +127,12 @@ func execPTTL(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(ttl / time.Millisecond))
 }
 
-//
 // execPersist
-//  @Description:PERSIST key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description:PERSIST key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execPersist(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -148,13 +150,12 @@ func execPersist(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
-//
 // execExpireTime
-//  @Description: EXPIRETIME key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: EXPIRETIME key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execExpireTime(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -171,13 +172,12 @@ func execExpireTime(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(expireTime)
 }
 
-//
 // execExpireAt
-//  @Description: EXPIREAT key unix-time-seconds [NX | XX | GT | LT]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: EXPIREAT key unix-time-seconds [NX | XX | GT | LT]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execExpireAt(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 
@@ -197,13 +197,12 @@ func execExpireAt(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
-//
 // execExpire
-//  @Description: EXPIRE key seconds [NX | XX | GT | LT]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: EXPIRE key seconds [NX | XX | GT | LT]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execExpire(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 
@@ -223,13 +222,12 @@ func execExpire(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
-//
 // execTTL returns a key's time to live in seconds
-//  @Description: TTL key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: TTL key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execTTL(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -308,12 +306,10 @@ func execType(db *DB, args [][]byte) resp.Reply {
 	return &reply.UnknowErrReply{}
 }
 
-//
-//  @Description: execRename a key
-//  @param db
-//  @param args
-//  @return resp.Reply	"OK"
-//
+// @Description: execRename a key
+// @param db
+// @param args
+// @return resp.Reply	"OK"
 func execRename(db *DB, args [][]byte) resp.Reply {
 	//RENAME key newkey
 	if len(args) != 2 {
@@ -339,12 +335,10 @@ func execRename(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeOkReply()
 }
 
-//
-//  @Description: execRenameNx a key, only if the new key does not exist
-//  @param db
-//  @param args
-//  @return resp.Reply	1 if key was renamed to newkey. 0 if newkey already exists.
-//
+// @Description: execRenameNx a key, only if the new key does not exist
+// @param db
+// @param args
+// @return resp.Reply	1 if key was renamed to newkey. 0 if newkey already exists.
 func execRenameNx(db *DB, args [][]byte) resp.Reply {
 	//RENAMENX key newkey
 	if len(args) != 2 {
@@ -374,11 +368,11 @@ func execRenameNx(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
+//	@Description: execKeys returns all keys matching the given pattern
+//	@param db
+//	@param args
+//	@return resp.Reply
 //
-//  @Description: execKeys returns all keys matching the given pattern
-//  @param db
-//  @param args
-//  @return resp.Reply
 // 需要借助第三方库实现通配符
 func execKeys(db *DB, args [][]byte) resp.Reply {
 	// 拿到通配符

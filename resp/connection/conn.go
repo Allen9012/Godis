@@ -1,12 +1,16 @@
-/**
-  @author: Allen
-  @since: 2023/2/24
-  @desc: // 协议层和客户端的连接
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/24
+	@desc: // 协议层和客户端的连接
+
+*
+*/
 package connection
 
 import (
-	"Gedis/lib/sync/wait"
+	"github.com/Allen9012/Godis/lib/sync/wait"
 	"net"
 	"sync"
 	"time"
@@ -36,13 +40,12 @@ func (c *Connection) Close() error {
 	return nil
 }
 
-//
 // Write
-//  @Description: 给用户写数据
-//  @receiver c
-//  @param bytes
-//  @return error
 //
+//	@Description: 给用户写数据
+//	@receiver c
+//	@param bytes
+//	@return error
 func (c *Connection) Write(bytes []byte) error {
 	// 特殊情况
 	if len(bytes) == 0 {

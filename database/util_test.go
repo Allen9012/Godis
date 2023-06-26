@@ -1,13 +1,17 @@
-/**
-  @author: Allen
-  @since: 2023/3/8
-  @desc: //TODO
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/3/8
+	@desc: //TODO
+
+*
+*/
 package database
 
 import (
-	"Gedis/datastruct/dict"
-	"Gedis/datastruct/lock"
+	"github.com/Allen9012/Godis/datastruct/dict"
+	"github.com/Allen9012/Godis/datastruct/lock"
 )
 
 func makeTestDB() *DB {

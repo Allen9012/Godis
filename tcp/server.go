@@ -1,9 +1,9 @@
 package tcp
 
 import (
-	"Gedis/interface/tcp"
-	"Gedis/lib/logger"
 	"context"
+	"github.com/Allen9012/Godis/interface/tcp"
+	"github.com/Allen9012/Godis/lib/logger"
 	"net"
 	"os"
 	"os/signal"

@@ -1,16 +1,20 @@
-/**
-  @author: Allen
-  @since: 2023/4/11
-  @desc: //rewrite
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/4/11
+	@desc: //rewrite
+
+*
+*/
 package aof
 
 import (
-	"Gedis/config"
-	"Gedis/interface/database"
-	"Gedis/lib/logger"
-	"Gedis/lib/utils"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/resp/reply"
 	"io"
 	"io/ioutil"
 	"os"

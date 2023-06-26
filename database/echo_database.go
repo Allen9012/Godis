@@ -1,13 +1,17 @@
-/**
-  @author: Allen
-  @since: 2023/2/25
-  @desc: // 测试的echo——base
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/25
+	@desc: // 测试的echo——base
+
+*
+*/
 package database
 
 import (
-	"Gedis/interface/resp"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/resp/reply"
 )
 
 type EchoDatabase struct {

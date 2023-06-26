@@ -1,16 +1,20 @@
-/**
-  @author: Allen
-  @since: 2023/2/27
-  @desc: //实现命令的内核
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/27
+	@desc: //实现命令的内核
+
+*
+*/
 package database
 
 import (
-	"Gedis/aof"
-	"Gedis/config"
-	"Gedis/interface/resp"
-	"Gedis/lib/logger"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/aof"
+	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strconv"
 	"strings"
 )
@@ -21,11 +25,10 @@ type StandaloneDatabase struct {
 	aofHandler *aof.AofHandler
 }
 
-//
 // NewStandaloneDatabase creates a redis database
-//  @Description: 创建数据库内核
-//  @return *StandaloneDatabase
 //
+//	@Description: 创建数据库内核
+//	@return *StandaloneDatabase
 func NewStandaloneDatabase() *StandaloneDatabase {
 	database := &StandaloneDatabase{}
 	if config.Properties.Databases == 0 {
@@ -58,15 +61,14 @@ func NewStandaloneDatabase() *StandaloneDatabase {
 	return database
 }
 
-//
 // Exec executes command
 // parameter `cmdLine` contains command and its arguments, for example: "set key value"
-//  @Description: 执行用户指令，相当于转交给DB处理指令
-//  @receiver d
-//  @param client
-//  @param args eg: set k v | get k | select 2
-//  @return resp.Reply
 //
+//	@Description: 执行用户指令，相当于转交给DB处理指令
+//	@receiver d
+//	@param client
+//	@param args eg: set k v | get k | select 2
+//	@return resp.Reply
 func (d *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
 	// 核心方法需要recover防止崩溃
 	defer func() {
@@ -94,14 +96,13 @@ func (d *StandaloneDatabase) Close() {
 func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 }
 
-//
 // execSelect
-//  @Description: 用户切换DB
-//  @param connection	用户选择的字段存在conn，修改此字段
-//  @param database
-//  @param args	eg: select 2
-//  @return resp.Reply
 //
+//	@Description: 用户切换DB
+//	@param connection	用户选择的字段存在conn，修改此字段
+//	@param database
+//	@param args	eg: select 2
+//	@return resp.Reply
 func execSelect(conn resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {

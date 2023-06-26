@@ -1,16 +1,20 @@
-/**
-  @author: Allen
-  @since: 2023/4/12
-  @desc: //TODO
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/4/12
+	@desc: //TODO
+
+*
+*/
 package database
 
 import (
-	HashSet "Gedis/datastruct/set"
-	"Gedis/interface/database"
-	"Gedis/interface/resp"
-	"Gedis/lib/utils"
-	"Gedis/resp/reply"
+	HashSet "github.com/Allen9012/Godis/datastruct/set"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strconv"
 )
 
@@ -58,13 +62,12 @@ func (db *DB) getOrInitSet(key string) (set *HashSet.Set, inited bool, errReply 
 	return set, inited, nil
 }
 
-//
 // execSRandMember gets random members from set
-//  @Description: SRANDMEMBER key [count]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SRANDMEMBER key [count]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSRandMember(db *DB, args [][]byte) resp.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'srandmember' command")
@@ -107,13 +110,12 @@ func execSRandMember(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeEmptyMultiBulkReply()
 }
 
-//
 // execSDiffStore subtracts multiple sets and store the result in a key
-//  @Description: SDIFFSTORE destination key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SDIFFSTORE destination key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSDiffStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -163,13 +165,12 @@ func execSDiffStore(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(set.Len()))
 }
 
-//
 // execSDiff subtracts multiple sets
-//  @Description: SDIFF key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SDIFF key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSDiff(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -215,13 +216,12 @@ func execSDiff(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(ret)
 }
 
-//
 // execSUnionStore adds multiple sets and store the result in a key
-//  @Description: SUNIONSTORE destination key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SUNIONSTORE destination key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSUnionStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -263,13 +263,12 @@ func execSUnionStore(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(set.Len()))
 }
 
-//
 // execSUnion adds multiple sets
-//  @Description: SUNION key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SUNION key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSUnion(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -308,13 +307,12 @@ func execSUnion(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(ret)
 }
 
-//
 // execSInterStore intersects multiple sets and store the result in a key
-//  @Description: SINTERSTORE destination key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SINTERSTORE destination key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSInterStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -354,13 +352,12 @@ func execSInterStore(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(set.Len()))
 }
 
-//
 // execSInter intersect multiple sets
-//  @Description: SINTER key [key ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SINTER key [key ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSInter(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -405,13 +402,12 @@ func execSInter(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(ret)
 }
 
-//
 // execSMembers gets all members in a set
-//  @Description: SMEMBERS key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SMEMBERS key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSMembers(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	set, errReply := db.getAsSet(key)
@@ -432,13 +428,12 @@ func execSMembers(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(result)
 }
 
-//
 // execSCard gets the number of members in a set
-//  @Description: SCARD key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SCARD key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSCard(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	// get or init entity
@@ -452,13 +447,13 @@ func execSCard(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(set.Len()))
 }
 
-//
 // execSPop removes one or more random members from set
-//  @Description: SPOP key [count]
-//  @param db
-//  @param args
-//  @return resp.Reply
-//  删除返回result
+//
+//	@Description: SPOP key [count]
+//	@param db
+//	@param args
+//	@return resp.Reply
+//	删除返回result
 func execSPop(db *DB, args [][]byte) resp.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'spop' command")
@@ -496,13 +491,12 @@ func execSPop(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(result)
 }
 
-//
 // execSRem removes a member from set
-//  @Description: SREM key member [member ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SREM key member [member ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSRem(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	members := args[1:]
@@ -530,13 +524,12 @@ func execSRem(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(counter))
 }
 
-//
 // execSIsMember checks if the given value is member of set
-//  @Description: SISMEMBER key member
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SISMEMBER key member
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSIsMember(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	member := string(args[1])
@@ -557,13 +550,12 @@ func execSIsMember(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(0)
 }
 
-//
 // execSAdd adds members into set
-//  @Description: SADD key member [member ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SADD key member [member ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSAdd(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	members := args[1:]

@@ -1,19 +1,23 @@
-/**
-  @author: Allen
-  @since: 2023/2/28
-  @desc: // 集群数据库
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/28
+	@desc: // 集群数据库
+
+*
+*/
 package cluster
 
 import (
-	"Gedis/config"
-	database2 "Gedis/database"
-	"Gedis/interface/database"
-	"Gedis/interface/resp"
-	"Gedis/lib/consistenthash"
-	"Gedis/lib/logger"
-	"Gedis/resp/reply"
 	"context"
+	"github.com/Allen9012/Godis/config"
+	database2 "github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/consistenthash"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/resp/reply"
 	pool "github.com/jolestar/go-commons-pool/v2"
 	"strings"
 )
@@ -26,13 +30,13 @@ type ClusterDatabase struct {
 	db             database.Database
 }
 
-//
 // MakeClusterDatabase
-//  @Description:
-//  @return *ClusterDatabase
-//	1. 创建对象，和赋值
-//	2. 一致性Hash并添加节点
-//  3. 建立连接池
+//
+//	 @Description:
+//	 @return *ClusterDatabase
+//		1. 创建对象，和赋值
+//		2. 一致性Hash并添加节点
+//	 3. 建立连接池
 func MakeClusterDatabase() *ClusterDatabase {
 	cluster := &ClusterDatabase{
 		self:           config.Properties.Self,

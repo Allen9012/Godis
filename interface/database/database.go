@@ -1,12 +1,16 @@
-/**
-  @author: Allen
-  @since: 2023/2/24
-  @desc: // 代表redis的业务核心
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/24
+	@desc: // 代表redis的业务核心
+
+*
+*/
 package database
 
 import (
-	"Gedis/interface/resp"
+	"github.com/Allen9012/Godis/interface/resp"
 	"time"
 )
 

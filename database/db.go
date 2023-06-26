@@ -1,18 +1,22 @@
-/**
-  @author: Allen
-  @since: 2023/2/25
-  @desc: //DB
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/25
+	@desc: //DB
+
+*
+*/
 package database
 
 import (
-	"Gedis/datastruct/dict"
-	"Gedis/datastruct/lock"
-	"Gedis/interface/database"
-	"Gedis/interface/resp"
-	"Gedis/lib/logger"
-	"Gedis/lib/timewheel"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/datastruct/dict"
+	"github.com/Allen9012/Godis/datastruct/lock"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/timewheel"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strings"
 	"time"
 )
@@ -56,13 +60,12 @@ func makeDB() *DB {
 	return db
 }
 
-//
 // Exec executes command within one database
-//  @Description:
-//  @receiver db*
-//  @param connection
-//  @param cmdline
 //
+//	@Description:
+//	@receiver db*
+//	@param connection
+//	@param cmdline
 func (db *DB) Exec(connection resp.Connection, cmdLine CmdLine) resp.Reply {
 	// 用户发的是什么指令
 	cmdName := strings.ToLower(string(cmdLine[0]))
@@ -94,14 +97,13 @@ func validateArity(arity int, cmdArgs [][]byte) bool {
 /* ---- data Access ----- */
 // 下面的方法相当于对dict套了一层壳
 
-//
 // GetEntity returns DataEntity bind to given key
-//  @Description: Get
-//  @receiver db
-//  @param key
-//  @return *database.DataEntity
-//  @return bool
 //
+//	@Description: Get
+//	@receiver db
+//	@param key
+//	@return *database.DataEntity
+//	@return bool
 func (db *DB) GetEntity(key string) (*database.DataEntity, bool) {
 	raw, ok := db.data.Get(key)
 	//raw是空接口，需要根据实际类型转化
@@ -112,14 +114,13 @@ func (db *DB) GetEntity(key string) (*database.DataEntity, bool) {
 	return entity, true
 }
 
-//
 // PutEntity a DataEntity into DB
-//  @Description: Set
-//  @receiver db
-//  @param key
-//  @param entity
-//  @return int 存入多少个
 //
+//	@Description: Set
+//	@receiver db
+//	@param key
+//	@param entity
+//	@return int 存入多少个
 func (db *DB) PutEntity(key string, entity *database.DataEntity) int {
 	// 存的时候会自动转化空接口，取的时候需要自己转化
 	return db.data.Put(key, entity)
@@ -147,11 +148,11 @@ func (db *DB) Remove(key string) {
 // Removes the given keys from db
 //
 // Removes the given keys from db
-//  @Description:
-//  @receiver db
-//  @param keys 变长参数
-//  @return deleted
 //
+//	@Description:
+//	@receiver db
+//	@param keys 变长参数
+//	@return deleted
 func (db *DB) Removes(keys ...string) (deleted int) {
 	deleted = 0
 	for _, key := range keys {
@@ -191,13 +192,12 @@ func (db *DB) RWUnLocks(writeKeys []string, readKeys []string) {
 	db.locker.RWUnLocks(writeKeys, readKeys)
 }
 
-//
 // Expire sets ttlCmd of key
-//  @Description: 设置过期时间
-//  @receiver db
-//  @param key
-//  @param expireTime
 //
+//	@Description: 设置过期时间
+//	@receiver db
+//	@param key
+//	@param expireTime
 func (db *DB) Expire(key string, expireTime time.Time) {
 	db.ttlMap.Put(key, expireTime)
 	taskKey := genExpireTask(key)
@@ -221,12 +221,11 @@ func (db *DB) Expire(key string, expireTime time.Time) {
 	})
 }
 
-//
 // Persist cancel ttlCmd of key
-//  @Description: 删除过期时间
-//  @receiver db
-//  @param key
 //
+//	@Description: 删除过期时间
+//	@receiver db
+//	@param key
 func (db *DB) Persist(key string) {
 	db.ttlMap.Remove(key)
 	taskKey := genExpireTask(key)

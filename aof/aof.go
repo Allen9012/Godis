@@ -1,18 +1,23 @@
-/**
-  @author: Allen
-  @since: 2023/2/27
-  @desc: //aof
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/27
+	@desc: //aof
+
+*
+*/
 package aof
 
 import (
-	"Gedis/config"
-	databaseface "Gedis/interface/database"
-	"Gedis/lib/logger"
-	"Gedis/lib/utils"
-	"Gedis/resp/connection"
-	"Gedis/resp/parser"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/config"
+	databaseface "github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/resp/connection"
+	"github.com/Allen9012/Godis/resp/parser"
+	"github.com/Allen9012/Godis/resp/reply"
+
 	"context"
 	"io"
 	"os"
@@ -125,11 +130,11 @@ func (handler *AofHandler) handleAof() {
 	}
 }
 
-//
 // LoadAof read aof file
-//  @Description:	//直接当成用户发送的指令
-//  @receiver handler
-//	该方法会执行类似Set方法，如果执行，也会调用aof,由于还没有没有初始化aoffunc 所以是一个空方法，需要在makeDB的时候初始化
+//
+//	 @Description:	//直接当成用户发送的指令
+//	 @receiver handler
+//		该方法会执行类似Set方法，如果执行，也会调用aof,由于还没有没有初始化aoffunc 所以是一个空方法，需要在makeDB的时候初始化
 func (handler *AofHandler) LoadAof() {
 	// aof还原（RESP协议编码）
 	file, err := os.Open(handler.aofFilename) //open只读

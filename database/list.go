@@ -1,16 +1,20 @@
-/**
-  @author: Allen
-  @since: 2023/3/12
-  @desc: //list
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/3/12
+	@desc: //list
+
+*
+*/
 package database
 
 import (
-	List "Gedis/datastruct/list"
-	"Gedis/interface/database"
-	"Gedis/interface/resp"
-	"Gedis/lib/utils"
-	"Gedis/resp/reply"
+	List "github.com/Allen9012/Godis/datastruct/list"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strconv"
 )
 
@@ -43,15 +47,14 @@ func (db *DB) getAsList(key string) (List.List, reply.ErrorReply) {
 	return list, nil
 }
 
-//
 // getOrInitList
-//  @Description: 获取value或者创建list
-//  @receiver db
-//  @param key
-//  @return list
-//  @return isNew
-//  @return errReply
 //
+//	@Description: 获取value或者创建list
+//	@receiver db
+//	@param key
+//	@return list
+//	@return isNew
+//	@return errReply
 func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply reply.ErrorReply) {
 	list, errReply = db.getAsList(key)
 	if errReply != nil {
@@ -68,13 +71,12 @@ func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply re
 	return list, isNew, nil
 }
 
-//
 // execLRange gets elements of list in given range
-//  @Description: LRANGE key start stop
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: LRANGE key start stop
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execLRange(db *DB, args [][]byte) resp.Reply {
 	if len(args) < 3 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'LRange' command")
@@ -131,13 +133,11 @@ func execLRange(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeMultiBulkReply(result)
 }
 
-//
-//  Sets the list element at index to element.
-//  @Description: LSET key index element
-//  @param db
-//  @param args
-//  @return resp.Reply
-//
+// Sets the list element at index to element.
+// @Description: LSET key index element
+// @param db
+// @param args
+// @return resp.Reply
 func execLSet(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -170,7 +170,7 @@ func execLSet(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeOkReply()
 }
 
-//LSET key index element
+// LSET key index element
 func undoLSet(db *DB, args [][]byte) []CmdLine {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -204,13 +204,11 @@ func undoLSet(db *DB, args [][]byte) []CmdLine {
 	}
 }
 
-//
-//  Returns the element at index in the list stored at key.
-//  @Description: LINDEX key index
-//  @param db
-//  @param args
-//  @return resp.Reply
-//
+// Returns the element at index in the list stored at key.
+// @Description: LINDEX key index
+// @param db
+// @param args
+// @return resp.Reply
 func execLIndex(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -241,13 +239,11 @@ func execLIndex(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeBulkReply(val)
 }
 
-//
-//  execLLen gets length of list
-//  @Description: LLEN key
-//  @param db
-//  @param args
-//  @return resp.Reply
-//
+// execLLen gets length of list
+// @Description: LLEN key
+// @param db
+// @param args
+// @return resp.Reply
 func execLLen(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -263,17 +259,16 @@ func execLLen(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(size)
 }
 
-//
 // Removes the first count occurrences of elements equal to element from the list stored at key.
 // The count argument influences the operation in the following ways:
 // count > 0: Remove elements equal to element moving from head to tail.
 // count < 0: Remove elements equal to element moving from tail to head.
 // count = 0: Remove all elements equal to element.
-//  @Description: LREM key count element
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: LREM key count element
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execLRem(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -316,13 +311,12 @@ func execLRem(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(removed))
 }
 
-//
 // execRPopLPush pops last element of list-A then insert it to the head of list-B
-//  @Description: RPOPLPUSH source destination
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: RPOPLPUSH source destination
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execRPopLPush(db *DB, args [][]byte) resp.Reply {
 	sourceKey := string(args[0])
 	destKey := string(args[1])
@@ -377,13 +371,12 @@ func undoRPopLPush(db *DB, args [][]byte) []CmdLine {
 	}
 }
 
-//
 // execRPop
-//  @Description: RPOP key [count]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: RPOP key [count]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execRPop(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -426,13 +419,11 @@ func undoRPop(db *DB, args [][]byte) []CmdLine {
 	}
 }
 
-//
-//  Removes and returns the first elements of the list stored at key.
-//  @Description: LPOP key [count]
-//  @param db
-//  @param args
-//  @return resp.Reply
-//
+// Removes and returns the first elements of the list stored at key.
+// @Description: LPOP key [count]
+// @param db
+// @param args
+// @return resp.Reply
 func execLPop(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -473,13 +464,11 @@ func undoLPop(db *DB, args [][]byte) []CmdLine {
 	}
 }
 
-//
-//  Inserts specified values at the tail of the list stored at key, only if key already exists and holds a list
-//  @Description: RPUSHX key element [element ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
-//
+// Inserts specified values at the tail of the list stored at key, only if key already exists and holds a list
+// @Description: RPUSHX key element [element ...]
+// @param db
+// @param args
+// @return resp.Reply
 func execRPushX(db *DB, args [][]byte) resp.Reply {
 	if len(args) < 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rpushx' command")
@@ -506,13 +495,12 @@ func execRPushX(db *DB, args [][]byte) resp.Reply {
 
 var lPushCmd = []byte("LPUSH")
 
-//
 // execRPush
-//  @Description: RPUSH key element [element ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: RPUSH key element [element ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execRPush(db *DB, args [][]byte) resp.Reply {
 	if len(args) < 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rpush' command")
@@ -535,13 +523,12 @@ func execRPush(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(list.Len()))
 }
 
-//
 // execLPushX inserts element at head of list, only if list exists
-//  @Description: LPUSHX key element [element ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: LPUSHX key element [element ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execLPushX(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	values := args[1:]
@@ -562,13 +549,12 @@ func execLPushX(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(list.Len()))
 }
 
-//
 // execLPush
-//  @Description: LPUSH key element [element ...]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: LPUSH key element [element ...]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execLPush(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	values := args[1:]

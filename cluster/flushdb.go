@@ -1,22 +1,27 @@
-/**
-  @author: Allen
-  @since: 2023/2/28
-  @desc: //flushdb 需要广播
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/28
+	@desc: //flushdb 需要广播
+
+*
+*/
 package cluster
 
 import (
-	"Gedis/interface/resp"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/resp/reply"
 )
 
-//
 // FlushDB removes all data in current database
-//  @Description:
-//  @param cluster
-//  @param c
-//  @param args
-//  @return resp.Reply
+//
+//	@Description:
+//	@param cluster
+//	@param c
+//	@param args
+//	@return resp.Reply
+//
 // 1. 广播所有节点
 // 2. 遍历所有节点判断一下
 // 3. 返回响应

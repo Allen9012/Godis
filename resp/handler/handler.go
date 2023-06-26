@@ -1,21 +1,25 @@
-/**
-  @author: Allen
-  @since: 2023/2/24
-  @desc: // 实现响应的Handler
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/24
+	@desc: // 实现响应的Handler
+
+*
+*/
 package handler
 
 import (
-	"Gedis/cluster"
-	"Gedis/config"
-	"Gedis/database"
-	databaseface "Gedis/interface/database"
-	"Gedis/lib/logger"
-	"Gedis/lib/sync/atomic"
-	"Gedis/resp/connection"
-	"Gedis/resp/parser"
-	"Gedis/resp/reply"
 	"context"
+	"github.com/Allen9012/Godis/cluster"
+	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/database"
+	databaseface "github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/sync/atomic"
+	"github.com/Allen9012/Godis/resp/connection"
+	"github.com/Allen9012/Godis/resp/parser"
+	"github.com/Allen9012/Godis/resp/reply"
 	"io"
 	"net"
 	"strings"
@@ -50,13 +54,12 @@ func (r *RespHandler) closeClient(client *connection.Connection) {
 	r.activeConn.Delete(client)
 }
 
-//
 // Handle
-//  @Description: 实现类似EchoHandler
-//  @receiver r
-//  @param ctx
-//  @param conn
 //
+//	@Description: 实现类似EchoHandler
+//	@receiver r
+//	@param ctx
+//	@param conn
 func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 	if r.closing.Get() {
 		_ = conn.Close()

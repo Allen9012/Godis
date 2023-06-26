@@ -1,17 +1,16 @@
 package config
 
 import (
-	"Gedis/lib/logger"
 	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Allen9012/Godis/lib/logger"
 	"io"
 	"log"
 	"net"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -25,117 +24,12 @@ const (
 	DEFULT_AOF_FILENAME        = "appendonly.aof"
 )
 
-// ServerProperties defines global config properties
-type ServerProperties struct {
-	Bind string `cfg:"bind"`
-	Port int    `cfg:"port"`
-
-	MaxClients  int      `cfg:"maxclients"`
-	RequirePass string   `cfg:"requirepass"`
-	Databases   int      `cfg:"databases"`
-	Peers       []string `cfg:"peers"`
-	Self        string   `cfg:"self"`
-	//   AOF
-	AppendOnly     bool   `cfg:"appendOnly"` //是否启用AOF
-	AppendFilename string `cfg:"appendFilename"`
-	// 额外字段
-	aofRewriteMinSize  int64  // the AOF file is at least N bytes
-	aofCurrentSize     int64  // AOF current size
-	aofRewritePerc     int64  // Rewrite AOF if growth > it
-	aofRewriteBaseSize int64  // AOF size on latest startup or rewrite
-	aofBuf             string // AOF buffer, written before entering the event loop
-	aofRewriteChan     chan bool
-	aofRewriteBuf      []byte //Hold changes during an AOF rewrite
-	aofAutoSyncBytes   int    `cfg:"aofAutoSyncBytes"`
-}
-
 type CfgError struct {
 	message string
 }
 
 func (cErr *CfgError) Error() string {
 	return cErr.message
-}
-
-// Properties holds global config properties
-var Properties *ServerProperties
-
-func init() {
-	// default config
-	Properties = &ServerProperties{
-		Bind:             LOCAL_ADDR,
-		Port:             PORT,
-		AppendOnly:       false,
-		aofAutoSyncBytes: AOF_AUTOSYNC_BYTES,
-	}
-}
-
-func parse(src io.Reader) *ServerProperties {
-	config := &ServerProperties{}
-
-	// read config file
-	rawMap := make(map[string]string)
-	scanner := bufio.NewScanner(src)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) > 0 && line[0] == '#' {
-			continue
-		}
-		pivot := strings.IndexAny(line, " ")
-		if pivot > 0 && pivot < len(line)-1 { // separator found
-			key := line[0:pivot]
-			value := strings.Trim(line[pivot+1:], " ")
-			rawMap[strings.ToLower(key)] = value
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		logger.Fatal(err)
-	}
-
-	// parse format
-	t := reflect.TypeOf(config)
-	v := reflect.ValueOf(config)
-	n := t.Elem().NumField()
-	for i := 0; i < n; i++ {
-		field := t.Elem().Field(i)
-		fieldVal := v.Elem().Field(i)
-		key, ok := field.Tag.Lookup("cfg")
-		if !ok {
-			key = field.Name
-		}
-		value, ok := rawMap[strings.ToLower(key)]
-		if ok {
-			// fill config
-			switch field.Type.Kind() {
-			case reflect.String:
-				fieldVal.SetString(value)
-			case reflect.Int:
-				intValue, err := strconv.ParseInt(value, 10, 64)
-				if err == nil {
-					fieldVal.SetInt(intValue)
-				}
-			case reflect.Bool:
-				boolValue := "yes" == value
-				fieldVal.SetBool(boolValue)
-			case reflect.Slice:
-				if field.Type.Elem().Kind() == reflect.String {
-					slice := strings.Split(value, ",")
-					fieldVal.Set(reflect.ValueOf(slice))
-				}
-			}
-		}
-	}
-	return config
-}
-
-// SetupConfig read config file and store properties into Properties
-func SetupConfig(configFilename string) {
-	file, err := os.Open(configFilename)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-	Properties = parse(file)
 }
 
 /*	配置方式： Config方式	--》 GoRedis 方式*/
@@ -190,13 +84,12 @@ func flagInit(cfg *Config) {
 	flag.BoolVar(&cfg.JoinCluster, "Join", false, "join an existing cluster")
 }
 
-//
 // Setup initialize configs and do some validation checking.
 // Return configured Config pointer and error.
-//  @Description: 初始化配置是默认配置。
-//  @param properties
-//  @return error
 //
+//	@Description: 初始化配置是默认配置。
+//	@param properties
+//	@return error
 func Setup() (*Config, error) {
 	cfg := &Config{
 		ConfFile:          configFile,

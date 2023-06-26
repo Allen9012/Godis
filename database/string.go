@@ -1,18 +1,22 @@
-/**
-  @author: Allen
-  @since: 2023/2/26
-  @desc: //string
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/26
+	@desc: //string
+
+*
+*/
 package database
 
 import (
-	"Gedis/aof"
-	"Gedis/datastruct/bitmap"
-	"Gedis/interface/database"
-	"Gedis/interface/resp"
-	"Gedis/lib/logger"
-	"Gedis/lib/utils"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/aof"
+	"github.com/Allen9012/Godis/datastruct/bitmap"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/utils"
+	"github.com/Allen9012/Godis/resp/reply"
 	"github.com/shopspring/decimal"
 	"math/bits"
 	"strconv"
@@ -28,13 +32,13 @@ const (
 	updatePolicy        // set ex
 )
 
-//GET
-//SET
-//SETNX
-//GETSET
-//STRLEN
-//GETEX
-//SETEX
+// GET
+// SET
+// SETNX
+// GETSET
+// STRLEN
+// GETEX
+// SETEX
 func init() {
 	// GET key
 	RegisterCommand("Get", execGet, 2)
@@ -67,14 +71,13 @@ func init() {
 	RegisterCommand("BitPos", execBitPos, -3)
 }
 
-//
 // getAsString
-//  @Description: key取出bytes字节
-//  @receiver db
-//  @param key
-//  @return []byte
-//  @return reply.ErrorReply
 //
+//	@Description: key取出bytes字节
+//	@receiver db
+//	@param key
+//	@return []byte
+//	@return reply.ErrorReply
 func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
 	entity, ok := db.GetEntity(key)
 	if !ok {
@@ -89,13 +92,13 @@ func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
 
 /* --- BitMap ---*/
 
-//
 // execBitPos
-//  @Description: BITPOS key bit [start [end [BYTE | BIT]]]
-//  @param db
-//  @param args
-//  @return resp.Reply
-//  Return the position of the first bit set to 1 or 0 in a string.
+//
+//	@Description: BITPOS key bit [start [end [BYTE | BIT]]]
+//	@param db
+//	@param args
+//	@return resp.Reply
+//	Return the position of the first bit set to 1 or 0 in a string.
 func execBitPos(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿到对应的value字节
 	// 2. 选择模式
@@ -166,13 +169,12 @@ func execBitPos(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(offset)
 }
 
-//
 // execBitCount
-//  @Description: BITCOUNT key [start end [BYTE | BIT]]
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: BITCOUNT key [start end [BYTE | BIT]]
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execBitCount(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿到key和对应的模式
 	// 2. 拿到起点和终点
@@ -237,13 +239,12 @@ func execBitCount(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(count)
 }
 
-//
 // execGetBit
-//  @Description: GETBIT key offset
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: GETBIT key offset
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execGetBit(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿出key，获取offset
 	// 2. 拿出value
@@ -265,13 +266,12 @@ func execGetBit(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(bm.GetBit(offset)))
 }
 
-//
 // execSetBit
-//  @Description: SETBIT key offset value
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: SETBIT key offset value
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execSetBit(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿出key，获取偏移，和设置的值
 	// 2. key找出value
@@ -320,16 +320,15 @@ func execGet(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeBulkReply(bytes)
 }
 
+//		execGetEX Get the value of key and optionally set its expiration
+//	 @Description: 注意需要考虑ttl
+//	 @param db
+//	 @param args		GETEX mykey
+//	 @return resp.Reply
 //
-//	execGetEX Get the value of key and optionally set its expiration
-//  @Description: 注意需要考虑ttl
-//  @param db
-//  @param args		GETEX mykey
-//  @return resp.Reply
-//
-//EX seconds: 设置指定的过期时间（以秒为单位）。
-//PX milliseconds: 设置指定的过期时间（以毫秒为单位）。
-//PERSIST: 删除与键关联的任何现有过期时间。
+// EX seconds: 设置指定的过期时间（以秒为单位）。
+// PX milliseconds: 设置指定的过期时间（以毫秒为单位）。
+// PERSIST: 删除与键关联的任何现有过期时间。
 func execGetEX(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿到key的bytes
 	// 2. 判断后续参数要求
@@ -406,15 +405,14 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeBulkReply(bytes)
 }
 
-//
 // execSet sets string value and time to live to the given key
-//  @Description: 增加set的ttl操作
-//  @param db
-//  @param args
-//  @return resp.Reply
-//  SET key value [NX | XX] [GET] [EX seconds | PX milliseconds |
-//  EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL]
 //
+//	@Description: 增加set的ttl操作
+//	@param db
+//	@param args
+//	@return resp.Reply
+//	SET key value [NX | XX] [GET] [EX seconds | PX milliseconds |
+//	EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL]
 func execSet(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	value := args[1]
@@ -537,11 +535,11 @@ func execSetNX(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(result))
 }
 
+//	@Description: execSetEX sets string and its ttl
+//	@param db
+//	@param args
+//	@return resp.Reply
 //
-//  @Description: execSetEX sets string and its ttl
-//  @param db
-//  @param args
-//  @return resp.Reply
 // SETEX key seconds value
 func execSetEX(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
@@ -566,11 +564,11 @@ func execSetEX(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeOkReply()
 }
 
+//	@Description: execGetSet sets value of a string-type key and returns its old value
+//	@param db
+//	@param args
+//	@return resp.Reply
 //
-//  @Description: execGetSet sets value of a string-type key and returns its old value
-//  @param db
-//  @param args
-//  @return resp.Reply
 // 修改key对应的value，返回原来的key
 func execGetSet(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
@@ -604,13 +602,12 @@ func execStrLen(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(int64(len(bytes)))
 }
 
-//
 // execIncr
-//  @Description: INCR key
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: INCR key
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execIncr(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	bytes, err := db.getAsString(key)
@@ -634,13 +631,12 @@ func execIncr(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
-//
 // execIncrBy
-//  @Description:INCRBY key increment
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description:INCRBY key increment
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execIncrBy(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
@@ -671,13 +667,12 @@ func execIncrBy(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(delta)
 }
 
-//
 // execIncrByFloat increments the float value of a key by given value
-//  @Description: INCRBYFLOAT key increment
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: INCRBYFLOAT key increment
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execIncrByFloat(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
@@ -768,13 +763,12 @@ func execDecrBy(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(-delta)
 }
 
-//
 // execAppend
-//  @Description: APPEND key value
-//  @param db
-//  @param args
-//  @return resp.Reply
 //
+//	@Description: APPEND key value
+//	@param db
+//	@param args
+//	@return resp.Reply
 func execAppend(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	bytes, errReply := db.getAsString(key)

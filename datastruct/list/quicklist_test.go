@@ -1,12 +1,16 @@
-/**
-  @author: Allen
-  @since: 2023/3/14
-  @desc: //TODO
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/3/14
+	@desc: //TODO
+
+*
+*/
 package list
 
 import (
-	"Gedis/lib/utils"
+	"github.com/Allen9012/Godis/lib/utils"
 	"strconv"
 	"testing"
 )

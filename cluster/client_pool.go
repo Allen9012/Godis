@@ -1,14 +1,18 @@
-/**
-  @author: Allen
-  @since: 2023/2/28
-  @desc: //借助go-commons-pool实现client连接池
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/28
+	@desc: //借助go-commons-pool实现client连接池
+
+*
+*/
 package cluster
 
 import (
-	"Gedis/resp/client"
 	"context"
 	"errors"
+	"github.com/Allen9012/Godis/resp/client"
 	pool "github.com/jolestar/go-commons-pool/v2"
 )
 

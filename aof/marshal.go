@@ -1,15 +1,19 @@
-/**
-  @author: Allen
-  @since: 2023/3/5
-  @desc: // 记录特别的aof
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/3/5
+	@desc: // 记录特别的aof
+
+*
+*/
 package aof
 
 import (
-	"Gedis/datastruct/dict"
-	List "Gedis/datastruct/list"
-	"Gedis/interface/database"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/datastruct/dict"
+	List "github.com/Allen9012/Godis/datastruct/list"
+	"github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/resp/reply"
 	"strconv"
 	"time"
 )

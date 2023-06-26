@@ -1,13 +1,17 @@
-/**
-  @author: Allen
-  @since: 2023/2/26
-  @desc: //TODO
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/26
+	@desc: //TODO
+
+*
+*/
 package database
 
 import (
-	"Gedis/interface/resp"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/resp/reply"
 )
 
 // 初始化把所有的指令存储在cmdTable中

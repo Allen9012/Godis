@@ -1,11 +1,11 @@
 package client
 
 import (
-	"Gedis/interface/resp"
-	"Gedis/lib/logger"
-	"Gedis/lib/sync/wait"
-	"Gedis/resp/parser"
-	"Gedis/resp/reply"
+	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/sync/wait"
+	"github.com/Allen9012/Godis/resp/parser"
+	"github.com/Allen9012/Godis/resp/reply"
 	"net"
 	"runtime/debug"
 	"sync"

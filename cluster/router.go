@@ -1,12 +1,16 @@
-/**
-  @author: Allen
-  @since: 2023/2/28
-  @desc: //记录指令和实现模式之间的关系
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/2/28
+	@desc: //记录指令和实现模式之间的关系
+
+*
+*/
 package cluster
 
 import (
-	"Gedis/interface/resp"
+	"github.com/Allen9012/Godis/interface/resp"
 )
 
 func makeRouter() map[string]CmdFunc {

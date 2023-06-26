@@ -1,11 +1,15 @@
-/**
-  @author: Allen
-  @since: 2023/4/12
-  @desc: //set
-**/
+/*
+*
+
+	@author: Allen
+	@since: 2023/4/12
+	@desc: //set
+
+*
+*/
 package set
 
-import "Gedis/datastruct/dict"
+import "github.com/Allen9012/Godis/datastruct/dict"
 
 // Set is a set of elements based on hash table
 type Set struct {

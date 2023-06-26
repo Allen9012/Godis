@@ -1,11 +1,11 @@
 package tcp
 
 import (
-	"Gedis/lib/logger"
-	"Gedis/lib/sync/atomic"
-	"Gedis/lib/sync/wait"
 	"bufio"
 	"context"
+	"github.com/Allen9012/Godis/lib/logger"
+	"github.com/Allen9012/Godis/lib/sync/atomic"
+	"github.com/Allen9012/Godis/lib/sync/wait"
 	"io"
 	"net"
 	"sync"

@@ -3,8 +3,16 @@
 2. 如果配置了集群方式的话IsCluster = true，就需要给出ClusterConfigPath否则error，配置方式须为Json格式
 3. 如果配置了集群，会读取RaftAddr，如果没有配置RaftAddr 默认读取PeerAddrs，如果开启了集群模式，默认database都是1，集群模式暂时只支持单base
 4. 相对于配置文件命令行配置优先级高
+5. 默认端口是6399
 
+> 注意配置如果没有给配置文件，默认配置是![img.png](markdown.asset/img3.png)
+> 如果给了配置文件默认初始化的配置是![img_1.png](markdown.asset/img2.png)
 
+## tcpServer
+1. TCPserver中通过一个Handler来缺点是不是启用Cluster模式
+2. syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT如果接收到这些信号的话，那么服务器会优雅关闭（把相关资源回收之后再关）
+
+6/26 优化，把原来两种一个是panic的关闭和一个信号的关闭二合一，通过channel来控制，如果信号channel接收到关闭信号，那么就会优雅关闭，否则就是err channel接收信号
 ## Resp协议
 RESP 定义了 5 种格式：
 

@@ -23,7 +23,6 @@ func main() {
 		logger.Error(err)
 		os.Exit(1)
 	}
-
 	//配置文件方式或者默认方式启动
 	config.Set_godis_config()
 

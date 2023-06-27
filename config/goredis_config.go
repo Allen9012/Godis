@@ -15,15 +15,6 @@ import (
 	"strings"
 )
 
-/* --- GODIS 配置方式 ---*/
-const (
-	PORT                int    = 9012
-	MAX_CLIENTS         int    = 10000
-	LOCAL_ADDR          string = "127.0.0.1"
-	AOF_AUTOSYNC_BYTES  int    = 1024 * 1024 * 10
-	DEFULT_AOF_FILENAME        = "appendonly.aof"
-)
-
 type CfgError struct {
 	message string
 }

@@ -10,7 +10,10 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
+
+/* --- GODIS 配置方式 ---*/
 
 const config_file string = "redis.conf"
 
@@ -56,12 +59,37 @@ type ServerProperties struct {
 	CfPath string `cfg:"cf,omitempty"`
 }
 
+type ServerInfo struct {
+	StartUpTime time.Time
+}
+
+func (p *ServerProperties) AnnounceAddress() string {
+	return p.AnnounceHost + ":" + strconv.Itoa(p.Port)
+}
+
+var EachTimeServerInfo *ServerInfo
+
 var defaultProperties = &ServerProperties{
 	Bind:       "0.0.0.0",
 	Port:       9012,
 	AppendOnly: false,
 	MaxClients: 1000,
 	RunID:      utils.RandString(40),
+}
+
+func init() {
+	// A few stats we don't want to reset: server startup time, and peak mem.
+	EachTimeServerInfo = &ServerInfo{
+		StartUpTime: time.Now(),
+	}
+
+	// default config
+	Properties = &ServerProperties{
+		Bind:       "127.0.0.1",
+		Port:       6379,
+		AppendOnly: false,
+		RunID:      utils.RandString(40),
+	}
 }
 
 func fileExists(filename string) bool {

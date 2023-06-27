@@ -5,7 +5,8 @@
 4. 相对于配置文件命令行配置优先级高
 5. 默认端口是6399
 
-> 注意配置如果没有给配置文件，默认配置是![img.png](markdown.asset/img3.png)
+> 注意配置如果没有给配置文件，默认配置是![img.png](markdown.asset/img3.png) 
+
 > 如果给了配置文件默认初始化的配置是![img_1.png](markdown.asset/img2.png)
 
 ## tcpServer

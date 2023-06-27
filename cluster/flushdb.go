@@ -11,7 +11,7 @@ package cluster
 
 import (
 	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 )
 
 // FlushDB removes all data in current database
@@ -20,7 +20,7 @@ import (
 //	@param cluster
 //	@param c
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //
 // 1. 广播所有节点
 // 2. 遍历所有节点判断一下

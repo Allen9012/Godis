@@ -10,10 +10,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
-const CONFIG_FILE string = "redis.conf"
+const config_file string = "redis.conf"
 
 // Properties holds global config properties
 var Properties *ServerProperties
@@ -34,7 +33,7 @@ type ServerProperties struct {
 	MaxClients        int    `cfg:"maxclients"`
 	RequirePass       string `cfg:"requirepass"`
 	Databases         int    `cfg:"databases"`
-	AnnounceHost      string `cfg:"announce-host"` // announce-host is the host name or IP address used for
+	AnnounceHost      string `cfg:"announce-host"`
 	RDBFilename       string `cfg:"dbfilename"`
 	MasterAuth        string `cfg:"masterauth"`
 	SlaveAnnouncePort int    `cfg:"slave-announce-port"`
@@ -57,38 +56,12 @@ type ServerProperties struct {
 	CfPath string `cfg:"cf,omitempty"`
 }
 
-var EachTimeServerInfo *ServerInfo
-
-type ServerInfo struct {
-	StartUpTime time.Time
-}
-
 var defaultProperties = &ServerProperties{
-	Bind:           "0.0.0.0",
-	Port:           6399,
-	AppendOnly:     false,
-	AppendFilename: "",
-	MaxClients:     1000,
-	RunID:          utils.RandString(40),
-}
-
-func (p *ServerProperties) AnnounceAddress() string {
-	return p.AnnounceHost + ":" + strconv.Itoa(p.Port)
-}
-
-func init() {
-	// A few stats we don't want to reset: server startup time, and peak mem.
-	EachTimeServerInfo = &ServerInfo{
-		StartUpTime: time.Now(),
-	}
-
-	// default config
-	Properties = &ServerProperties{
-		Bind:       "127.0.0.1",
-		Port:       6399,
-		AppendOnly: false,
-		RunID:      utils.RandString(40),
-	}
+	Bind:       "0.0.0.0",
+	Port:       9012,
+	AppendOnly: false,
+	MaxClients: 1000,
+	RunID:      utils.RandString(40),
 }
 
 func fileExists(filename string) bool {
@@ -96,41 +69,37 @@ func fileExists(filename string) bool {
 	return err == nil && !info.IsDir()
 }
 
-// Set_godis_config 用于设置配置
-func Set_godis_config() (err error) {
-	configFilename := os.Getenv("CONFIG")
-	if configFilename == "" {
-		if fileExists(CONFIG_FILE) {
-			err = SetupConfig(CONFIG_FILE)
-		} else {
-			Properties = defaultProperties
-		}
+func Set_godis_config() {
+	if fileExists(config_file) {
+		SetupConfig(config_file)
 	} else {
-		err = SetupConfig(configFilename)
+		Properties = defaultProperties
 	}
-	return
 }
 
 // SetupConfig read config file and store properties into Properties
-func SetupConfig(configFilename string) error {
+func SetupConfig(configFilename string) {
 	file, err := os.Open(configFilename)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		if err := file.Close(); err != nil {
+			panic(err)
+		}
+	}(file)
 	Properties = parse(file)
 	Properties.RunID = utils.RandString(40)
 	// 配置文件路徑
 	configFilePath, err := filepath.Abs(configFilename)
 	if err != nil {
 		logger.Error(err)
-		return err
+		return
 	}
 	Properties.CfPath = configFilePath
 	if Properties.Dir == "" {
 		Properties.Dir = "."
 	}
-	return nil
 }
 
 // parse config file
@@ -142,7 +111,7 @@ func parse(src io.Reader) *ServerProperties {
 	scanner := bufio.NewScanner(src)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if len(line) > 0 && strings.TrimLeft(line, " ")[0] == '#' {
+		if len(line) > 0 && line[0] == '#' {
 			continue
 		}
 		pivot := strings.IndexAny(line, " ")
@@ -164,7 +133,7 @@ func parse(src io.Reader) *ServerProperties {
 		field := t.Elem().Field(i)
 		fieldVal := v.Elem().Field(i)
 		key, ok := field.Tag.Lookup("cfg")
-		if !ok || strings.TrimLeft(key, " ") == "" {
+		if !ok {
 			key = field.Name
 		}
 		value, ok := rawMap[strings.ToLower(key)]
@@ -190,8 +159,4 @@ func parse(src io.Reader) *ServerProperties {
 		}
 	}
 	return config
-}
-
-func GetTmpDir() string {
-	return Properties.Dir + "/tmp"
 }

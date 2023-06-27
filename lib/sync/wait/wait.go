@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+/**
+  Copyright © 2023 github.com/Allen9012 All rights reserved.
+  @author: Allen
+  @since: 2023/6/26
+  @desc: 封装了sync.WaitGroup，增加了超时功能
+  @modified by:
+**/
+
 // Wait is similar with sync.WaitGroup which can wait with timeout
 type Wait struct {
 	wg sync.WaitGroup

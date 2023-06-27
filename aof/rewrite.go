@@ -14,7 +14,7 @@ import (
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"io"
 	"io/ioutil"
 	"os"

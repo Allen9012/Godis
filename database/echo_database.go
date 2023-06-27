@@ -11,7 +11,7 @@ package database
 
 import (
 	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 )
 
 type EchoDatabase struct {

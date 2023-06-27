@@ -14,8 +14,8 @@ import (
 	"errors"
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/resp/client"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/client"
+	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
@@ -71,7 +71,7 @@ func (cluster *ClusterDatabase) returnPeerClient(peer string, peerClient *client
 //	@param peer
 //	@param c
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func (cluster *ClusterDatabase) relay(peer string, c resp.Connection, args [][]byte) resp.Reply {
 	if peer == cluster.self {
 		return cluster.db.Exec(c, args)
@@ -93,7 +93,7 @@ func (cluster *ClusterDatabase) relay(peer string, c resp.Connection, args [][]b
 //	@receiver cluster
 //	@param c
 //	@param args
-//	@return map[string]resp.Reply
+//	@return map[string]redis.Reply
 func (cluster *ClusterDatabase) broadcast(c resp.Connection, args [][]byte) map[string]resp.Reply {
 	results := make(map[string]resp.Reply)
 	for _, node := range cluster.nodes {

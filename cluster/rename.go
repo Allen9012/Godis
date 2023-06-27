@@ -11,7 +11,7 @@ package cluster
 
 import (
 	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 )
 
 // Rename renames a key, the origin and the destination must within the same node
@@ -20,7 +20,7 @@ import (
 //	 @param cluster
 //	 @param c
 //	 @param args
-//	 @return resp.Reply
+//	 @return redis.Reply
 //		rename k1 k2
 func Rename(cluster *ClusterDatabase, c resp.Connection, args [][]byte) resp.Reply {
 	if len(args) != 3 {

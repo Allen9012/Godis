@@ -12,7 +12,7 @@ package cluster
 import (
 	"context"
 	"errors"
-	"github.com/Allen9012/Godis/resp/client"
+	"github.com/Allen9012/Godis/redis/client"
 	pool "github.com/jolestar/go-commons-pool/v2"
 )
 

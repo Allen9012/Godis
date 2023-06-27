@@ -14,7 +14,7 @@ import (
 	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"strings"
 )
@@ -68,7 +68,7 @@ func NewStandaloneDatabase() *StandaloneDatabase {
 //	@receiver d
 //	@param client
 //	@param args eg: set k v | get k | select 2
-//	@return resp.Reply
+//	@return redis.Reply
 func (d *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
 	// 核心方法需要recover防止崩溃
 	defer func() {
@@ -102,7 +102,7 @@ func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 //	@param connection	用户选择的字段存在conn，修改此字段
 //	@param database
 //	@param args	eg: select 2
-//	@return resp.Reply
+//	@return redis.Reply
 func execSelect(conn resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {

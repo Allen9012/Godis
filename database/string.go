@@ -16,7 +16,7 @@ import (
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"github.com/shopspring/decimal"
 	"math/bits"
 	"strconv"
@@ -97,7 +97,7 @@ func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
 //	@Description: BITPOS key bit [start [end [BYTE | BIT]]]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //	Return the position of the first bit set to 1 or 0 in a string.
 func execBitPos(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿到对应的value字节
@@ -174,7 +174,7 @@ func execBitPos(db *DB, args [][]byte) resp.Reply {
 //	@Description: BITCOUNT key [start end [BYTE | BIT]]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execBitCount(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿到key和对应的模式
 	// 2. 拿到起点和终点
@@ -244,7 +244,7 @@ func execBitCount(db *DB, args [][]byte) resp.Reply {
 //	@Description: GETBIT key offset
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execGetBit(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿出key，获取offset
 	// 2. 拿出value
@@ -271,7 +271,7 @@ func execGetBit(db *DB, args [][]byte) resp.Reply {
 //	@Description: SETBIT key offset value
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSetBit(db *DB, args [][]byte) resp.Reply {
 	// 1. 拿出key，获取偏移，和设置的值
 	// 2. key找出value
@@ -324,7 +324,7 @@ func execGet(db *DB, args [][]byte) resp.Reply {
 //	 @Description: 注意需要考虑ttl
 //	 @param db
 //	 @param args		GETEX mykey
-//	 @return resp.Reply
+//	 @return redis.Reply
 //
 // EX seconds: 设置指定的过期时间（以秒为单位）。
 // PX milliseconds: 设置指定的过期时间（以毫秒为单位）。
@@ -410,7 +410,7 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 //	@Description: 增加set的ttl操作
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //	SET key value [NX | XX] [GET] [EX seconds | PX milliseconds |
 //	EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL]
 func execSet(db *DB, args [][]byte) resp.Reply {
@@ -538,7 +538,7 @@ func execSetNX(db *DB, args [][]byte) resp.Reply {
 //	@Description: execSetEX sets string and its ttl
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //
 // SETEX key seconds value
 func execSetEX(db *DB, args [][]byte) resp.Reply {
@@ -567,7 +567,7 @@ func execSetEX(db *DB, args [][]byte) resp.Reply {
 //	@Description: execGetSet sets value of a string-type key and returns its old value
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //
 // 修改key对应的value，返回原来的key
 func execGetSet(db *DB, args [][]byte) resp.Reply {
@@ -607,7 +607,7 @@ func execStrLen(db *DB, args [][]byte) resp.Reply {
 //	@Description: INCR key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execIncr(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	bytes, err := db.getAsString(key)
@@ -636,7 +636,7 @@ func execIncr(db *DB, args [][]byte) resp.Reply {
 //	@Description:INCRBY key increment
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execIncrBy(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
@@ -672,7 +672,7 @@ func execIncrBy(db *DB, args [][]byte) resp.Reply {
 //	@Description: INCRBYFLOAT key increment
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execIncrByFloat(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
@@ -768,7 +768,7 @@ func execDecrBy(db *DB, args [][]byte) resp.Reply {
 //	@Description: APPEND key value
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execAppend(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	bytes, errReply := db.getAsString(key)

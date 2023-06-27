@@ -14,7 +14,7 @@ import (
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/utils"
 	"github.com/Allen9012/Godis/lib/wildcard"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"time"
 )
@@ -110,7 +110,7 @@ func execPExpire(db *DB, args [][]byte) resp.Reply {
 //	@Description: PTTL key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execPTTL(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -132,7 +132,7 @@ func execPTTL(db *DB, args [][]byte) resp.Reply {
 //	@Description:PERSIST key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execPersist(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -155,7 +155,7 @@ func execPersist(db *DB, args [][]byte) resp.Reply {
 //	@Description: EXPIRETIME key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execExpireTime(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -177,7 +177,7 @@ func execExpireTime(db *DB, args [][]byte) resp.Reply {
 //	@Description: EXPIREAT key unix-time-seconds [NX | XX | GT | LT]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execExpireAt(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 
@@ -202,7 +202,7 @@ func execExpireAt(db *DB, args [][]byte) resp.Reply {
 //	@Description: EXPIRE key seconds [NX | XX | GT | LT]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execExpire(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 
@@ -227,7 +227,7 @@ func execExpire(db *DB, args [][]byte) resp.Reply {
 //	@Description: TTL key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execTTL(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
@@ -371,7 +371,7 @@ func execRenameNx(db *DB, args [][]byte) resp.Reply {
 //	@Description: execKeys returns all keys matching the given pattern
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //
 // 需要借助第三方库实现通配符
 func execKeys(db *DB, args [][]byte) resp.Reply {

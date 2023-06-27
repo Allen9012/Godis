@@ -84,7 +84,7 @@ func ListenAndServe(listener net.Listener, handler tcp.Handler, closeChan <-chan
 	//	if err = listener.Close(); err != nil {
 	//		logger.Error(err)
 	//	}
-	//	_ = handler.Close()
+	//	_ = server.Close()
 	//	// 2. shut down client goroutines (send disconnect msg)
 	//	cancel()
 	//	// 3. wait for all clients to disconnect

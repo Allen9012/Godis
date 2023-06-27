@@ -11,7 +11,7 @@ package database
 
 import (
 	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 )
 
 // 初始化把所有的指令存储在cmdTable中

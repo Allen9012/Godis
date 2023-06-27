@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/resp/handler"
+	"github.com/Allen9012/Godis/redis/server"
 	"github.com/Allen9012/Godis/tcp"
 	"os"
 )
@@ -11,18 +11,22 @@ import (
 func main() {
 	print(banner)
 	// 配置logger屬性
-	logger.Setup(&logger.Settings{
+	if err := logger.Setup(&logger.Settings{
 		Path:       "logs",
 		Name:       "godis",
 		Ext:        "log",
 		TimeFormat: "2006-01-02",
-	})
+	}); err != nil {
+		logger.Error(err)
+		os.Exit(1)
+	}
 	// GoRedis的config形式
 	cfg, err := config.Setup()
 	if err != nil {
 		logger.Error(err)
 		os.Exit(1)
 	}
+
 	//配置文件方式或者默认方式启动
 	config.Set_godis_config()
 
@@ -32,7 +36,7 @@ func main() {
 			Host: cfg.Host,
 			Port: cfg.Port,
 		},
-		handler.MakeHandler())
+		server.MakeHandler())
 	if err != nil {
 		logger.Error(err)
 	}

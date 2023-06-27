@@ -1,13 +1,4 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/2/24
-	@desc: // 实现响应的Handler
-
-*
-*/
-package handler
+package server
 
 import (
 	"context"
@@ -17,41 +8,47 @@ import (
 	databaseface "github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/sync/atomic"
-	"github.com/Allen9012/Godis/resp/connection"
-	"github.com/Allen9012/Godis/resp/parser"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/connection"
+	"github.com/Allen9012/Godis/redis/parser"
+	"github.com/Allen9012/Godis/redis/reply"
 	"io"
 	"net"
 	"strings"
 	"sync"
 )
 
+/*
+@author: Allen
+@since: 2023/2/24
+@desc: // A tcp.Handler implements redis protocol
+*/
+
 var unknownErrReplyBytes = []byte("-ERR unknown\r\n")
 
-type RespHandler struct {
-	activeConn sync.Map
+type Handler struct {
+	activeConn sync.Map // *client -> placeholder
 	db         databaseface.Database
-	closing    atomic.Boolean
+	closing    atomic.Boolean // refusing new client and new request
 }
 
-func MakeHandler() *RespHandler {
+func MakeHandler() *Handler {
 	var db databaseface.Database
-	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+	if config.Properties.ClusterEnable {
 		db = cluster.MakeClusterDatabase()
 	} else {
 		db = database.NewStandaloneDatabase()
 	}
-	return &RespHandler{
+	return &Handler{
 		db: db,
 	}
 }
 
 // 关闭一个客户端连接
-func (r *RespHandler) closeClient(client *connection.Connection) {
+func (h *Handler) closeClient(client *connection.Connection) {
 	_ = client.Close()
-	r.db.AfterClientClose(client)
+	h.db.AfterClientClose(client)
 	// 删除map的内容
-	r.activeConn.Delete(client)
+	h.activeConn.Delete(client)
 }
 
 // Handle
@@ -60,14 +57,14 @@ func (r *RespHandler) closeClient(client *connection.Connection) {
 //	@receiver r
 //	@param ctx
 //	@param conn
-func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
-	if r.closing.Get() {
+func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
+	if h.closing.Get() {
 		_ = conn.Close()
 	}
 	// 获得一个conn
 	client := connection.NewConn(conn)
 	// todo 先写成空结构体，可以节约空间，后期有需求可以修改
-	r.activeConn.Store(client, struct{}{})
+	h.activeConn.Store(client, struct{}{})
 	// parser开始工作
 	ch := parser.ParseStream(conn)
 	// 不断解析ch，死循环
@@ -79,7 +76,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			if payload.Err == io.EOF || payload.Err == io.ErrUnexpectedEOF ||
 				strings.Contains(payload.Err.Error(), "use of closed network connection") {
 				// 果断断开连接就可以
-				r.closeClient(client)
+				h.closeClient(client)
 				logger.Info("connection closed: " + client.RemoteAddr().String())
 				return
 			}
@@ -87,7 +84,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			errReply := reply.MakeErrReply(payload.Err.Error())
 			err := client.Write(errReply.ToBytes())
 			if err != nil {
-				r.closeClient(client)
+				h.closeClient(client)
 				logger.Info("connection closed: " + client.RemoteAddr().String())
 				return
 			}
@@ -104,7 +101,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			logger.Error("require multi bulk reply")
 			continue
 		}
-		result := r.db.Exec(client, multiBulkreply.Args)
+		result := h.db.Exec(client, multiBulkreply.Args)
 		if result != nil {
 			_ = client.Write(result.ToBytes())
 		} else {
@@ -115,17 +112,17 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 }
 
 // Close 关闭所有连接
-func (r *RespHandler) Close() error {
-	logger.Info("handler shutting down")
-	r.closing.Set(true)
+func (h *Handler) Close() error {
+	logger.Info("server shutting down")
+	h.closing.Set(true)
 	// 遍历和关闭
-	r.activeConn.Range(
+	h.activeConn.Range(
 		func(key, value any) bool {
 			client := key.(*connection.Connection)
 			_ = client.Close()
 			return true
 		},
 	)
-	r.db.Close()
+	h.db.Close()
 	return nil
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
@@ -76,7 +76,7 @@ func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply re
 //	@Description: LRANGE key start stop
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execLRange(db *DB, args [][]byte) resp.Reply {
 	if len(args) < 3 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'LRange' command")
@@ -268,7 +268,7 @@ func execLLen(db *DB, args [][]byte) resp.Reply {
 //	@Description: LREM key count element
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execLRem(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -316,7 +316,7 @@ func execLRem(db *DB, args [][]byte) resp.Reply {
 //	@Description: RPOPLPUSH source destination
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execRPopLPush(db *DB, args [][]byte) resp.Reply {
 	sourceKey := string(args[0])
 	destKey := string(args[1])
@@ -376,7 +376,7 @@ func undoRPopLPush(db *DB, args [][]byte) []CmdLine {
 //	@Description: RPOP key [count]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execRPop(db *DB, args [][]byte) resp.Reply {
 	// parse args
 	key := string(args[0])
@@ -500,7 +500,7 @@ var lPushCmd = []byte("LPUSH")
 //	@Description: RPUSH key element [element ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execRPush(db *DB, args [][]byte) resp.Reply {
 	if len(args) < 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rpush' command")
@@ -528,7 +528,7 @@ func execRPush(db *DB, args [][]byte) resp.Reply {
 //	@Description: LPUSHX key element [element ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execLPushX(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	values := args[1:]
@@ -554,7 +554,7 @@ func execLPushX(db *DB, args [][]byte) resp.Reply {
 //	@Description: LPUSH key element [element ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execLPush(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	values := args[1:]

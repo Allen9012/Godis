@@ -69,7 +69,7 @@ func (handler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 }
 
 func (handler *EchoHandler) Close() error {
-	logger.Info("handler shutting down")
+	logger.Info("server shutting down")
 	handler.closing.Set(true)
 	// 关掉所有的东西
 	handler.activeConn.Range(func(key, value any) bool {
@@ -82,6 +82,6 @@ func (handler *EchoHandler) Close() error {
 	return nil
 }
 
-func MakeHandler() *EchoHandler {
+func MakeEchoHandler() *EchoHandler {
 	return &EchoHandler{}
 }

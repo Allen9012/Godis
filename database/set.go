@@ -14,7 +14,7 @@ import (
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/resp"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/resp/reply"
+	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
@@ -67,7 +67,7 @@ func (db *DB) getOrInitSet(key string) (set *HashSet.Set, inited bool, errReply 
 //	@Description: SRANDMEMBER key [count]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSRandMember(db *DB, args [][]byte) resp.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'srandmember' command")
@@ -115,7 +115,7 @@ func execSRandMember(db *DB, args [][]byte) resp.Reply {
 //	@Description: SDIFFSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSDiffStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -170,7 +170,7 @@ func execSDiffStore(db *DB, args [][]byte) resp.Reply {
 //	@Description: SDIFF key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSDiff(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -221,7 +221,7 @@ func execSDiff(db *DB, args [][]byte) resp.Reply {
 //	@Description: SUNIONSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSUnionStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -268,7 +268,7 @@ func execSUnionStore(db *DB, args [][]byte) resp.Reply {
 //	@Description: SUNION key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSUnion(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -312,7 +312,7 @@ func execSUnion(db *DB, args [][]byte) resp.Reply {
 //	@Description: SINTERSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSInterStore(db *DB, args [][]byte) resp.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -357,7 +357,7 @@ func execSInterStore(db *DB, args [][]byte) resp.Reply {
 //	@Description: SINTER key [key ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSInter(db *DB, args [][]byte) resp.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -407,7 +407,7 @@ func execSInter(db *DB, args [][]byte) resp.Reply {
 //	@Description: SMEMBERS key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSMembers(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	set, errReply := db.getAsSet(key)
@@ -433,7 +433,7 @@ func execSMembers(db *DB, args [][]byte) resp.Reply {
 //	@Description: SCARD key
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSCard(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	// get or init entity
@@ -452,7 +452,7 @@ func execSCard(db *DB, args [][]byte) resp.Reply {
 //	@Description: SPOP key [count]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 //	删除返回result
 func execSPop(db *DB, args [][]byte) resp.Reply {
 	if len(args) != 1 && len(args) != 2 {
@@ -496,7 +496,7 @@ func execSPop(db *DB, args [][]byte) resp.Reply {
 //	@Description: SREM key member [member ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSRem(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	members := args[1:]
@@ -529,7 +529,7 @@ func execSRem(db *DB, args [][]byte) resp.Reply {
 //	@Description: SISMEMBER key member
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSIsMember(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	member := string(args[1])
@@ -555,7 +555,7 @@ func execSIsMember(db *DB, args [][]byte) resp.Reply {
 //	@Description: SADD key member [member ...]
 //	@param db
 //	@param args
-//	@return resp.Reply
+//	@return redis.Reply
 func execSAdd(db *DB, args [][]byte) resp.Reply {
 	key := string(args[0])
 	members := args[1:]

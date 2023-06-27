@@ -105,7 +105,7 @@ type ErrorReply interface {
 	ToBytes() []byte
 }
 
-// StandardErrReply represents handler error
+// StandardErrReply represents server error
 type StandardErrReply struct {
 	Status string
 }

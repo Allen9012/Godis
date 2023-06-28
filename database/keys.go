@@ -34,8 +34,6 @@ func init() {
 	RegisterCommand("Rename", execRename, 3)
 	//RENAMENX key newkey
 	RegisterCommand("RenameNx", execRenameNx, 3)
-
-	RegisterCommand("RenameNx", execRenameNx, 3)
 	RegisterCommand("Expire", execExpire, 3)
 	RegisterCommand("ExpireAt", execExpireAt, 3)
 	RegisterCommand("ExpireTime", execExpireTime, 2)

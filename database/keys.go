@@ -11,10 +11,10 @@ package database
 
 import (
 	"github.com/Allen9012/Godis/aof"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"github.com/Allen9012/Godis/lib/wildcard"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"time"
 )
@@ -47,7 +47,7 @@ func init() {
 	RegisterCommand("PExpireTime", execPExpireTime, 2)
 }
 
-func execPExpireTime(db *DB, args [][]byte) resp.Reply {
+func execPExpireTime(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
@@ -63,7 +63,7 @@ func execPExpireTime(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(expireTime)
 }
 
-func execPExpireAt(db *DB, args [][]byte) resp.Reply {
+func execPExpireAt(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -83,7 +83,7 @@ func execPExpireAt(db *DB, args [][]byte) resp.Reply {
 	return reply.MakeIntReply(1)
 }
 
-func execPExpire(db *DB, args [][]byte) resp.Reply {
+func execPExpire(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -111,7 +111,7 @@ func execPExpire(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execPTTL(db *DB, args [][]byte) resp.Reply {
+func execPTTL(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
@@ -133,7 +133,7 @@ func execPTTL(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execPersist(db *DB, args [][]byte) resp.Reply {
+func execPersist(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
@@ -156,7 +156,7 @@ func execPersist(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execExpireTime(db *DB, args [][]byte) resp.Reply {
+func execExpireTime(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
@@ -178,7 +178,7 @@ func execExpireTime(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execExpireAt(db *DB, args [][]byte) resp.Reply {
+func execExpireAt(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -203,7 +203,7 @@ func execExpireAt(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execExpire(db *DB, args [][]byte) resp.Reply {
+func execExpire(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -228,7 +228,7 @@ func execExpire(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execTTL(db *DB, args [][]byte) resp.Reply {
+func execTTL(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
@@ -253,7 +253,7 @@ func execTTL(db *DB, args [][]byte) resp.Reply {
 //RENAMENX
 
 // execDel removes a key from db
-func execDel(db *DB, args [][]byte) resp.Reply {
+func execDel(db *DB, args [][]byte) godis.Reply {
 	// 把[][]args->keys
 	keys := make([]string, len(args))
 	for i, v := range args {
@@ -269,7 +269,7 @@ func execDel(db *DB, args [][]byte) resp.Reply {
 }
 
 // execExists checks if a is existed in db
-func execExists(db *DB, args [][]byte) resp.Reply {
+func execExists(db *DB, args [][]byte) godis.Reply {
 	count := int64(0)
 	for _, arg := range args {
 		// 每拿到一个key就去查看是否有key
@@ -283,7 +283,7 @@ func execExists(db *DB, args [][]byte) resp.Reply {
 }
 
 // execFlushDB removes all data in current db
-func execFlushDB(db *DB, args [][]byte) resp.Reply {
+func execFlushDB(db *DB, args [][]byte) godis.Reply {
 	db.Flush()
 	//aof
 	db.addAof(utils.ToCmdLine3("flushdb", args...))
@@ -291,7 +291,7 @@ func execFlushDB(db *DB, args [][]byte) resp.Reply {
 }
 
 // execType returns the type of entity, including: string, list, hash, set and zset
-func execType(db *DB, args [][]byte) resp.Reply {
+func execType(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	entity, exists := db.GetEntity(key)
 	if !exists {
@@ -310,7 +310,7 @@ func execType(db *DB, args [][]byte) resp.Reply {
 // @param db
 // @param args
 // @return resp.Reply	"OK"
-func execRename(db *DB, args [][]byte) resp.Reply {
+func execRename(db *DB, args [][]byte) godis.Reply {
 	//RENAME key newkey
 	if len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rename' command")
@@ -339,7 +339,7 @@ func execRename(db *DB, args [][]byte) resp.Reply {
 // @param db
 // @param args
 // @return resp.Reply	1 if key was renamed to newkey. 0 if newkey already exists.
-func execRenameNx(db *DB, args [][]byte) resp.Reply {
+func execRenameNx(db *DB, args [][]byte) godis.Reply {
 	//RENAMENX key newkey
 	if len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'renamenx' command")
@@ -374,7 +374,7 @@ func execRenameNx(db *DB, args [][]byte) resp.Reply {
 //	@return redis.Reply
 //
 // 需要借助第三方库实现通配符
-func execKeys(db *DB, args [][]byte) resp.Reply {
+func execKeys(db *DB, args [][]byte) godis.Reply {
 	// 拿到通配符
 	pattern := wildcard.CompilePattern(string(args[0]))
 	// 返回用初始化二维切片

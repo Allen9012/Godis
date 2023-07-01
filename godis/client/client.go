@@ -1,11 +1,11 @@
 package client
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/godis/parser"
+	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/sync/wait"
-	"github.com/Allen9012/Godis/redis/parser"
-	"github.com/Allen9012/Godis/redis/reply"
 	"net"
 	"runtime/debug"
 	"sync"
@@ -27,7 +27,7 @@ type Client struct {
 type request struct {
 	id        uint64
 	args      [][]byte
-	reply     resp.Reply
+	reply     godis.Reply
 	heartbeat bool
 	waiting   *wait.Wait
 	err       error
@@ -116,7 +116,7 @@ func (client *Client) handleWrite() {
 }
 
 // Send sends a request to redis server
-func (client *Client) Send(args [][]byte) resp.Reply {
+func (client *Client) Send(args [][]byte) godis.Reply {
 	request := &request{
 		args:      args,
 		heartbeat: false,
@@ -172,7 +172,7 @@ func (client *Client) doRequest(req *request) {
 	}
 }
 
-func (client *Client) finishRequest(reply resp.Reply) {
+func (client *Client) finishRequest(reply godis.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
 			debug.PrintStack()

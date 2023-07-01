@@ -12,8 +12,8 @@ package aof
 import (
 	"github.com/Allen9012/Godis/datastruct/dict"
 	List "github.com/Allen9012/Godis/datastruct/list"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"time"
 )

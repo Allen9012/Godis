@@ -9,9 +9,7 @@
 */
 package cluster
 
-import (
-	"github.com/Allen9012/Godis/interface/resp"
-)
+import "github.com/Allen9012/Godis/interface/godis"
 
 func makeRouter() map[string]CmdFunc {
 	routerMap := make(map[string]CmdFunc)
@@ -32,7 +30,7 @@ func makeRouter() map[string]CmdFunc {
 }
 
 // GET Key // Set K1 v1
-func defaultFunc(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply {
+func defaultFunc(cluster *ClusterDatabase, c godis.Connection, cmdArgs [][]byte) godis.Reply {
 	key := string(cmdArgs[0])
 	peer := cluster.peerPicker.PickNode(key)
 	return cluster.relay(peer, c, cmdArgs)

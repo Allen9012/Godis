@@ -11,10 +11,10 @@ package aof
 
 import (
 	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/reply"
 	"io"
 	"io/ioutil"
 	"os"

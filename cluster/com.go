@@ -12,10 +12,10 @@ package cluster
 import (
 	"context"
 	"errors"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/godis/client"
+	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/client"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
@@ -72,7 +72,7 @@ func (cluster *ClusterDatabase) returnPeerClient(peer string, peerClient *client
 //	@param c
 //	@param args
 //	@return redis.Reply
-func (cluster *ClusterDatabase) relay(peer string, c resp.Connection, args [][]byte) resp.Reply {
+func (cluster *ClusterDatabase) relay(peer string, c godis.Connection, args [][]byte) godis.Reply {
 	if peer == cluster.self {
 		return cluster.db.Exec(c, args)
 	}
@@ -94,8 +94,8 @@ func (cluster *ClusterDatabase) relay(peer string, c resp.Connection, args [][]b
 //	@param c
 //	@param args
 //	@return map[string]redis.Reply
-func (cluster *ClusterDatabase) broadcast(c resp.Connection, args [][]byte) map[string]resp.Reply {
-	results := make(map[string]resp.Reply)
+func (cluster *ClusterDatabase) broadcast(c godis.Connection, args [][]byte) map[string]godis.Reply {
+	results := make(map[string]godis.Reply)
 	for _, node := range cluster.nodes {
 		result := cluster.relay(node, c, args)
 		results[node] = result

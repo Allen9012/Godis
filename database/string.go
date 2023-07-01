@@ -1,22 +1,18 @@
-/*
-*
+package database
 
+/*
 	@author: Allen
 	@since: 2023/2/26
 	@desc: //string
-
-*
 */
-package database
-
 import (
 	"github.com/Allen9012/Godis/aof"
 	"github.com/Allen9012/Godis/datastruct/bitmap"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/reply"
 	"github.com/shopspring/decimal"
 	"math/bits"
 	"strconv"
@@ -99,7 +95,7 @@ func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
 //	@param args
 //	@return redis.Reply
 //	Return the position of the first bit set to 1 or 0 in a string.
-func execBitPos(db *DB, args [][]byte) resp.Reply {
+func execBitPos(db *DB, args [][]byte) godis.Reply {
 	// 1. 拿到对应的value字节
 	// 2. 选择模式
 	key := string(args[0])
@@ -175,7 +171,7 @@ func execBitPos(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execBitCount(db *DB, args [][]byte) resp.Reply {
+func execBitCount(db *DB, args [][]byte) godis.Reply {
 	// 1. 拿到key和对应的模式
 	// 2. 拿到起点和终点
 	// 3. 拿到size 转化成切片的size
@@ -245,7 +241,7 @@ func execBitCount(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execGetBit(db *DB, args [][]byte) resp.Reply {
+func execGetBit(db *DB, args [][]byte) godis.Reply {
 	// 1. 拿出key，获取offset
 	// 2. 拿出value
 	// 4. value转换成bitmap
@@ -272,7 +268,7 @@ func execGetBit(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSetBit(db *DB, args [][]byte) resp.Reply {
+func execSetBit(db *DB, args [][]byte) godis.Reply {
 	// 1. 拿出key，获取偏移，和设置的值
 	// 2. key找出value
 	// 3. value转换成bitmap
@@ -304,7 +300,7 @@ func execSetBit(db *DB, args [][]byte) resp.Reply {
 }
 
 // execGet returns string value bound to the given key
-func execGet(db *DB, args [][]byte) resp.Reply {
+func execGet(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	entity, exists := db.GetEntity(key)
 	if !exists {
@@ -329,7 +325,7 @@ func execGet(db *DB, args [][]byte) resp.Reply {
 // EX seconds: 设置指定的过期时间（以秒为单位）。
 // PX milliseconds: 设置指定的过期时间（以毫秒为单位）。
 // PERSIST: 删除与键关联的任何现有过期时间。
-func execGetEX(db *DB, args [][]byte) resp.Reply {
+func execGetEX(db *DB, args [][]byte) godis.Reply {
 	// 1. 拿到key的bytes
 	// 2. 判断后续参数要求
 	key := string(args[0])
@@ -413,7 +409,7 @@ func execGetEX(db *DB, args [][]byte) resp.Reply {
 //	@return redis.Reply
 //	SET key value [NX | XX] [GET] [EX seconds | PX milliseconds |
 //	EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL]
-func execSet(db *DB, args [][]byte) resp.Reply {
+func execSet(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	value := args[1]
 	policy := upsertPolicy
@@ -505,7 +501,7 @@ func execSet(db *DB, args [][]byte) resp.Reply {
 }
 
 // execGetDel Get the value of key and delete the key.
-func execGetDel(db *DB, args [][]byte) resp.Reply {
+func execGetDel(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	old, err := db.getAsString(key)
@@ -523,7 +519,7 @@ func execGetDel(db *DB, args [][]byte) resp.Reply {
 }
 
 // execSetNX sets string if not exists
-func execSetNX(db *DB, args [][]byte) resp.Reply {
+func execSetNX(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	value := args[1]
 	entity := &database.DataEntity{
@@ -541,7 +537,7 @@ func execSetNX(db *DB, args [][]byte) resp.Reply {
 //	@return redis.Reply
 //
 // SETEX key seconds value
-func execSetEX(db *DB, args [][]byte) resp.Reply {
+func execSetEX(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	value := args[2]
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -570,7 +566,7 @@ func execSetEX(db *DB, args [][]byte) resp.Reply {
 //	@return redis.Reply
 //
 // 修改key对应的value，返回原来的key
-func execGetSet(db *DB, args [][]byte) resp.Reply {
+func execGetSet(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	value := args[1]
 	old, err := db.getAsString(key)
@@ -590,7 +586,7 @@ func execGetSet(db *DB, args [][]byte) resp.Reply {
 }
 
 // execStrLen returns len of string value bound to the given key
-func execStrLen(db *DB, args [][]byte) resp.Reply {
+func execStrLen(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	bytes, err := db.getAsString(key)
 	if err != nil {
@@ -608,7 +604,7 @@ func execStrLen(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execIncr(db *DB, args [][]byte) resp.Reply {
+func execIncr(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	bytes, err := db.getAsString(key)
 	if err != nil {
@@ -637,7 +633,7 @@ func execIncr(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execIncrBy(db *DB, args [][]byte) resp.Reply {
+func execIncrBy(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
 	delta, err := strconv.ParseInt(rawDelta, 10, 64)
@@ -673,7 +669,7 @@ func execIncrBy(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execIncrByFloat(db *DB, args [][]byte) resp.Reply {
+func execIncrByFloat(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
 	delta, err := decimal.NewFromString(rawDelta)
@@ -705,7 +701,7 @@ func execIncrByFloat(db *DB, args [][]byte) resp.Reply {
 }
 
 // execDecr decrements the integer value of a key by one
-func execDecr(db *DB, args [][]byte) resp.Reply {
+func execDecr(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 
 	bytes, errReply := db.getAsString(key)
@@ -732,7 +728,7 @@ func execDecr(db *DB, args [][]byte) resp.Reply {
 }
 
 // execDecrBy decrements the integer value of a key by onedecrement
-func execDecrBy(db *DB, args [][]byte) resp.Reply {
+func execDecrBy(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	rawDelta := string(args[1])
 	delta, err := strconv.ParseInt(rawDelta, 10, 64)
@@ -769,7 +765,7 @@ func execDecrBy(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execAppend(db *DB, args [][]byte) resp.Reply {
+func execAppend(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	bytes, errReply := db.getAsString(key)
 	if errReply != nil {

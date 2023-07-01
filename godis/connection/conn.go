@@ -33,6 +33,7 @@ func NewConn(conn net.Conn) *Connection {
 func (c *Connection) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
 }
+
 func (c *Connection) Close() error {
 	// 等待通信结束之后关闭，目的是防止还在传输数据
 	c.waitingReply.WaitWithTimeout(10 * time.Second)

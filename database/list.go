@@ -1,23 +1,19 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/3/12
-	@desc: //list
-
-*
-*/
 package database
 
 import (
 	List "github.com/Allen9012/Godis/datastruct/list"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
+/*
+	@author: Allen
+	@since: 2023/3/12
+	@desc: //list
+*/
 func init() {
 	RegisterCommand("LPush", execLPush, -3)
 	RegisterCommand("LPushX", execLPushX, -3)
@@ -77,7 +73,7 @@ func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply re
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execLRange(db *DB, args [][]byte) resp.Reply {
+func execLRange(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 3 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'LRange' command")
 	}
@@ -138,7 +134,7 @@ func execLRange(db *DB, args [][]byte) resp.Reply {
 // @param db
 // @param args
 // @return resp.Reply
-func execLSet(db *DB, args [][]byte) resp.Reply {
+func execLSet(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
@@ -209,7 +205,7 @@ func undoLSet(db *DB, args [][]byte) []CmdLine {
 // @param db
 // @param args
 // @return resp.Reply
-func execLIndex(db *DB, args [][]byte) resp.Reply {
+func execLIndex(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
@@ -244,7 +240,7 @@ func execLIndex(db *DB, args [][]byte) resp.Reply {
 // @param db
 // @param args
 // @return resp.Reply
-func execLLen(db *DB, args [][]byte) resp.Reply {
+func execLLen(db *DB, args [][]byte) godis.Reply {
 	// parse args
 	key := string(args[0])
 
@@ -269,7 +265,7 @@ func execLLen(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execLRem(db *DB, args [][]byte) resp.Reply {
+func execLRem(db *DB, args [][]byte) godis.Reply {
 	// parse args
 	key := string(args[0])
 	count64, err := strconv.ParseInt(string(args[1]), 10, 64)
@@ -317,7 +313,7 @@ func execLRem(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execRPopLPush(db *DB, args [][]byte) resp.Reply {
+func execRPopLPush(db *DB, args [][]byte) godis.Reply {
 	sourceKey := string(args[0])
 	destKey := string(args[1])
 
@@ -377,7 +373,7 @@ func undoRPopLPush(db *DB, args [][]byte) []CmdLine {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execRPop(db *DB, args [][]byte) resp.Reply {
+func execRPop(db *DB, args [][]byte) godis.Reply {
 	// parse args
 	key := string(args[0])
 
@@ -424,7 +420,7 @@ func undoRPop(db *DB, args [][]byte) []CmdLine {
 // @param db
 // @param args
 // @return resp.Reply
-func execLPop(db *DB, args [][]byte) resp.Reply {
+func execLPop(db *DB, args [][]byte) godis.Reply {
 	// parse args
 	key := string(args[0])
 
@@ -469,7 +465,7 @@ func undoLPop(db *DB, args [][]byte) []CmdLine {
 // @param db
 // @param args
 // @return resp.Reply
-func execRPushX(db *DB, args [][]byte) resp.Reply {
+func execRPushX(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rpushx' command")
 	}
@@ -501,7 +497,7 @@ var lPushCmd = []byte("LPUSH")
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execRPush(db *DB, args [][]byte) resp.Reply {
+func execRPush(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'rpush' command")
 	}
@@ -529,7 +525,7 @@ func execRPush(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execLPushX(db *DB, args [][]byte) resp.Reply {
+func execLPushX(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	values := args[1:]
 	// get or init entity
@@ -555,7 +551,7 @@ func execLPushX(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execLPush(db *DB, args [][]byte) resp.Reply {
+func execLPush(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	values := args[1:]
 

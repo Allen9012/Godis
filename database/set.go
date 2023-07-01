@@ -1,20 +1,17 @@
-/*
-*
+package database
 
+/*
 	@author: Allen
 	@since: 2023/4/12
 	@desc: //TODO
-
-*
 */
-package database
 
 import (
 	HashSet "github.com/Allen9012/Godis/datastruct/set"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 )
 
@@ -68,7 +65,7 @@ func (db *DB) getOrInitSet(key string) (set *HashSet.Set, inited bool, errReply 
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSRandMember(db *DB, args [][]byte) resp.Reply {
+func execSRandMember(db *DB, args [][]byte) godis.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'srandmember' command")
 	}
@@ -116,7 +113,7 @@ func execSRandMember(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSDiffStore(db *DB, args [][]byte) resp.Reply {
+func execSDiffStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
 	keyArgs := args[1:]
@@ -171,7 +168,7 @@ func execSDiffStore(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSDiff(db *DB, args [][]byte) resp.Reply {
+func execSDiff(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
 		keys[i] = string(arg)
@@ -222,7 +219,7 @@ func execSDiff(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSUnionStore(db *DB, args [][]byte) resp.Reply {
+func execSUnionStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
 	keyArgs := args[1:]
@@ -269,7 +266,7 @@ func execSUnionStore(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSUnion(db *DB, args [][]byte) resp.Reply {
+func execSUnion(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
 		keys[i] = string(arg)
@@ -313,7 +310,7 @@ func execSUnion(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSInterStore(db *DB, args [][]byte) resp.Reply {
+func execSInterStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
 	keyArgs := args[1:]
@@ -358,7 +355,7 @@ func execSInterStore(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSInter(db *DB, args [][]byte) resp.Reply {
+func execSInter(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
 		keys[i] = string(arg)
@@ -408,7 +405,7 @@ func execSInter(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSMembers(db *DB, args [][]byte) resp.Reply {
+func execSMembers(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	set, errReply := db.getAsSet(key)
 	if errReply != nil {
@@ -434,7 +431,7 @@ func execSMembers(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSCard(db *DB, args [][]byte) resp.Reply {
+func execSCard(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	// get or init entity
 	set, errReply := db.getAsSet(key)
@@ -454,7 +451,7 @@ func execSCard(db *DB, args [][]byte) resp.Reply {
 //	@param args
 //	@return redis.Reply
 //	删除返回result
-func execSPop(db *DB, args [][]byte) resp.Reply {
+func execSPop(db *DB, args [][]byte) godis.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return reply.MakeErrReply("ERR wrong number of arguments for 'spop' command")
 	}
@@ -497,7 +494,7 @@ func execSPop(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSRem(db *DB, args [][]byte) resp.Reply {
+func execSRem(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	members := args[1:]
 
@@ -530,7 +527,7 @@ func execSRem(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSIsMember(db *DB, args [][]byte) resp.Reply {
+func execSIsMember(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	member := string(args[1])
 
@@ -556,7 +553,7 @@ func execSIsMember(db *DB, args [][]byte) resp.Reply {
 //	@param db
 //	@param args
 //	@return redis.Reply
-func execSAdd(db *DB, args [][]byte) resp.Reply {
+func execSAdd(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	members := args[1:]
 

@@ -1,16 +1,14 @@
+package cluster
+
 /*
 *
-
 	@author: Allen
 	@since: 2023/2/28
 	@desc: //select
-
 *
 */
-package cluster
+import "github.com/Allen9012/Godis/interface/godis"
 
-import "github.com/Allen9012/Godis/interface/resp"
-
-func execSelect(cluster *ClusterDatabase, c resp.Connection, cmdAndArgs [][]byte) resp.Reply {
+func execSelect(cluster *ClusterDatabase, c godis.Connection, cmdAndArgs [][]byte) godis.Reply {
 	return cluster.db.Exec(c, cmdAndArgs)
 }

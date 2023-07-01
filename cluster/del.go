@@ -10,8 +10,8 @@
 package cluster
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/redis/reply"
+	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/interface/godis"
 )
 
 // Del atomically removes given writeKeys from cluster, writeKeys can be distributed on any node
@@ -22,7 +22,7 @@ import (
 //	@param c
 //	@param args
 //	@return redis.Reply
-func Del(cluster *ClusterDatabase, c resp.Connection, args [][]byte) resp.Reply {
+func Del(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
 	replies := cluster.broadcast(c, args)
 	var errReply reply.ErrorReply
 	var deleted int64 = 0

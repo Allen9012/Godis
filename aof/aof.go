@@ -11,12 +11,12 @@ package aof
 
 import (
 	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/godis/connection"
+	"github.com/Allen9012/Godis/godis/parser"
+	"github.com/Allen9012/Godis/godis/reply"
 	databaseface "github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/connection"
-	"github.com/Allen9012/Godis/redis/parser"
-	"github.com/Allen9012/Godis/redis/reply"
 
 	"context"
 	"io"

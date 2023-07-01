@@ -5,12 +5,12 @@ import (
 	"github.com/Allen9012/Godis/cluster"
 	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/godis/connection"
+	"github.com/Allen9012/Godis/godis/parser"
+	"github.com/Allen9012/Godis/godis/reply"
 	databaseface "github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/sync/atomic"
-	"github.com/Allen9012/Godis/redis/connection"
-	"github.com/Allen9012/Godis/redis/parser"
-	"github.com/Allen9012/Godis/redis/reply"
 	"io"
 	"net"
 	"strings"
@@ -53,7 +53,7 @@ func (h *Handler) closeClient(client *connection.Connection) {
 
 // Handle
 //
-//	@Description: 实现类似EchoHandler
+//	@Description: 处理连接
 //	@receiver r
 //	@param ctx
 //	@param conn
@@ -92,16 +92,16 @@ func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
 		}
 		// exec
 		if payload.Data == nil {
-			// 啥也没fa
+			// 啥也没发
 			logger.Info("send nothing: " + client.RemoteAddr().String())
 			continue
 		}
-		multiBulkreply, ok := payload.Data.(*reply.MultiBulkReply)
+		multiBulkReply, ok := payload.Data.(*reply.MultiBulkReply)
 		if !ok {
 			logger.Error("require multi bulk reply")
 			continue
 		}
-		result := h.db.Exec(client, multiBulkreply.Args)
+		result := h.db.Exec(client, multiBulkReply.Args)
 		if result != nil {
 			_ = client.Write(result.ToBytes())
 		} else {

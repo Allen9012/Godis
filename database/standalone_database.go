@@ -1,20 +1,17 @@
-/*
-*
+package database
 
+/*
 	@author: Allen
 	@since: 2023/2/27
 	@desc: //实现命令的内核
-
-*
 */
-package database
 
 import (
 	"github.com/Allen9012/Godis/aof"
 	"github.com/Allen9012/Godis/config"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"strings"
 )
@@ -69,7 +66,7 @@ func NewStandaloneDatabase() *StandaloneDatabase {
 //	@param client
 //	@param args eg: set k v | get k | select 2
 //	@return redis.Reply
-func (d *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
+func (d *StandaloneDatabase) Exec(client godis.Connection, args [][]byte) godis.Reply {
 	// 核心方法需要recover防止崩溃
 	defer func() {
 		if err := recover(); err != nil {
@@ -93,7 +90,7 @@ func (d *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Re
 func (d *StandaloneDatabase) Close() {
 }
 
-func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
+func (d *StandaloneDatabase) AfterClientClose(c godis.Connection) {
 }
 
 // execSelect
@@ -103,7 +100,7 @@ func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 //	@param database
 //	@param args	eg: select 2
 //	@return redis.Reply
-func execSelect(conn resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
+func execSelect(conn godis.Connection, database *StandaloneDatabase, args [][]byte) godis.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {
 		return reply.MakeErrReply("ERR invalid DB index")

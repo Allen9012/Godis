@@ -13,11 +13,11 @@ import (
 	"context"
 	"github.com/Allen9012/Godis/config"
 	database2 "github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/consistenthash"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/redis/reply"
 	pool "github.com/jolestar/go-commons-pool/v2"
 	"strings"
 )
@@ -62,11 +62,11 @@ func MakeClusterDatabase() *ClusterDatabase {
 }
 
 // CmdFunc 声明成类型
-type CmdFunc func(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply
+type CmdFunc func(cluster *ClusterDatabase, c godis.Connection, cmdArgs [][]byte) godis.Reply
 
 var router = makeRouter()
 
-func (c *ClusterDatabase) Exec(client resp.Connection, args [][]byte) (result resp.Reply) {
+func (c *ClusterDatabase) Exec(client godis.Connection, args [][]byte) (result godis.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
@@ -86,6 +86,6 @@ func (c *ClusterDatabase) Close() {
 	c.db.Close()
 }
 
-func (c *ClusterDatabase) AfterClientClose(conn resp.Connection) {
+func (c *ClusterDatabase) AfterClientClose(conn godis.Connection) {
 	c.db.AfterClientClose(conn)
 }

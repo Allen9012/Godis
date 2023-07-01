@@ -11,9 +11,9 @@ package database
 
 import (
 	"fmt"
+	"github.com/Allen9012/Godis/godis/protocol/asserts"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/protocol/asserts"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"testing"
 )

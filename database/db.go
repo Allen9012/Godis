@@ -12,11 +12,11 @@ package database
 import (
 	"github.com/Allen9012/Godis/datastruct/dict"
 	"github.com/Allen9012/Godis/datastruct/lock"
+	"github.com/Allen9012/Godis/godis/reply"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/timewheel"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strings"
 	"time"
 )
@@ -42,7 +42,7 @@ type DB struct {
 // ExecFunc 统一执行方法
 // ExecFunc is interface for command executor
 // args don't include cmd line
-type ExecFunc func(db *DB, args [][]byte) resp.Reply
+type ExecFunc func(db *DB, args [][]byte) godis.Reply
 
 // CmdLine is alias for [][]byte, represents a command line
 type CmdLine = [][]byte
@@ -60,13 +60,24 @@ func makeDB() *DB {
 	return db
 }
 
+//// makeBasicDB create DB instance only with basic abilities.
+//func makeBasicDB() *DB {
+//	db := &DB{
+//		data:       dict.MakeConcurrent(dataDictSize),
+//		ttlMap:     dict.MakeConcurrent(ttlDictSize),
+//		versionMap: dict.MakeConcurrent(dataDictSize),
+//		addAof:     func(line CmdLine) {},
+//	}
+//	return db
+//}
+
 // Exec executes command within one database
 //
 //	@Description:
 //	@receiver db*
 //	@param connection
 //	@param cmdline
-func (db *DB) Exec(connection resp.Connection, cmdLine CmdLine) resp.Reply {
+func (db *DB) Exec(connection godis.Connection, cmdLine CmdLine) godis.Reply {
 	// 用户发的是什么指令
 	cmdName := strings.ToLower(string(cmdLine[0]))
 	cmd, ok := cmdTable[cmdName]

@@ -11,7 +11,7 @@ package asserts
 
 import (
 	"fmt"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"runtime"
@@ -20,7 +20,7 @@ import (
 
 // AssertIntReply checks if the given redis.Reply is the expected integer
 func AssertIntReply(t *testing.T, actual godis.Reply, expected int) {
-	intResult, ok := actual.(*reply.IntReply)
+	intResult, ok := actual.(*protocol.IntReply)
 	if !ok {
 		t.Errorf("expected int protocol, actually %s, %s", actual.ToBytes(), printStack())
 		return
@@ -31,7 +31,7 @@ func AssertIntReply(t *testing.T, actual godis.Reply, expected int) {
 }
 
 func AssertIntReplyGreaterThan(t *testing.T, actual godis.Reply, expected int) {
-	intResult, ok := actual.(*reply.IntReply)
+	intResult, ok := actual.(*protocol.IntReply)
 	if !ok {
 		t.Errorf("expected int protocol, actually %s, %s", actual.ToBytes(), printStack())
 		return
@@ -43,7 +43,7 @@ func AssertIntReplyGreaterThan(t *testing.T, actual godis.Reply, expected int) {
 
 // AssertBulkReply checks if the given redis.Reply is the expected string
 func AssertBulkReply(t *testing.T, actual godis.Reply, expected string) {
-	bulkReply, ok := actual.(*reply.BulkReply)
+	bulkReply, ok := actual.(*protocol.BulkReply)
 	if !ok {
 		t.Errorf("expected bulk protocol, actually %s, %s", actual.ToBytes(), printStack())
 		return
@@ -55,10 +55,10 @@ func AssertBulkReply(t *testing.T, actual godis.Reply, expected string) {
 
 // AssertStatusReply checks if the given redis.Reply is the expected status
 func AssertStatusReply(t *testing.T, actual godis.Reply, expected string) {
-	statusReply, ok := actual.(*reply.StatusReply)
+	statusReply, ok := actual.(*protocol.StatusReply)
 	if !ok {
 		// may be a protocol.OkReply e.g.
-		expectBytes := reply.MakeStatusReply(expected).ToBytes()
+		expectBytes := protocol.MakeStatusReply(expected).ToBytes()
 		if utils.BytesEquals(actual.ToBytes(), expectBytes) {
 			return
 		}
@@ -72,9 +72,9 @@ func AssertStatusReply(t *testing.T, actual godis.Reply, expected string) {
 
 // AssertErrReply checks if the given redis.Reply is the expected error
 func AssertErrReply(t *testing.T, actual godis.Reply, expected string) {
-	errReply, ok := actual.(reply.ErrorReply)
+	errReply, ok := actual.(protocol.ErrorReply)
 	if !ok {
-		expectBytes := reply.MakeErrReply(expected).ToBytes()
+		expectBytes := protocol.MakeErrReply(expected).ToBytes()
 		if utils.BytesEquals(actual.ToBytes(), expectBytes) {
 			return
 		}
@@ -113,7 +113,7 @@ func AssertNullBulk(t *testing.T, result godis.Reply) {
 		t.Errorf("result is empty %s", printStack())
 		return
 	}
-	expect := (&reply.NullBulkReply{}).ToBytes()
+	expect := (&protocol.NullBulkReply{}).ToBytes()
 	if !utils.BytesEquals(expect, bytes) {
 		t.Errorf("result is not null-bulk-protocol %s", printStack())
 	}
@@ -121,7 +121,7 @@ func AssertNullBulk(t *testing.T, result godis.Reply) {
 
 // AssertMultiBulkReply checks if the given redis.Reply has the expected content
 func AssertMultiBulkReply(t *testing.T, actual godis.Reply, expected []string) {
-	multiBulk, ok := actual.(*reply.MultiBulkReply)
+	multiBulk, ok := actual.(*protocol.MultiBulkReply)
 	if !ok {
 		t.Errorf("expected bulk protocol, actually %s, %s", actual.ToBytes(), printStack())
 		return
@@ -141,10 +141,10 @@ func AssertMultiBulkReply(t *testing.T, actual godis.Reply, expected []string) {
 
 // AssertMultiBulkReplySize check if redis.Reply has expected length
 func AssertMultiBulkReplySize(t *testing.T, actual godis.Reply, expected int) {
-	multiBulk, ok := actual.(*reply.MultiBulkReply)
+	multiBulk, ok := actual.(*protocol.MultiBulkReply)
 	if !ok {
 		if expected == 0 &&
-			utils.BytesEquals(actual.ToBytes(), reply.MakeEmptyMultiBulkReply().ToBytes()) {
+			utils.BytesEquals(actual.ToBytes(), protocol.MakeEmptyMultiBulkReply().ToBytes()) {
 			return
 		}
 		t.Errorf("expected bulk protocol, actually %s, %s", actual.ToBytes(), printStack())

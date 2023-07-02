@@ -10,11 +10,10 @@
 package aof
 
 import (
-	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/godis/connection"
 	"github.com/Allen9012/Godis/godis/parser"
-	"github.com/Allen9012/Godis/godis/reply"
-	databaseface "github.com/Allen9012/Godis/interface/database"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
 
@@ -31,7 +30,7 @@ import (
 type CmdLine = [][]byte
 
 const (
-	aofBufferSize = 1 << 16
+	aofQueueSize = 1 << 20
 )
 
 const (
@@ -59,133 +58,137 @@ type payload struct {
 	wg      *sync.WaitGroup
 }
 
-/* ---old version aof struct--- */
-
-// AofHandler receive msgs from channel and write to AOF file
-type AofHandler struct {
-	database    databaseface.Database // 用于调用Exec
-	aofChan     chan *payload         //该channel将要持久化的命令发送到异步协程
-	aofFile     *os.File              //append file 文件描述符
-	aofFilename string                //append file 路径
-	currentDB   int                   // 上一次写到的db
-}
-
-// NewAOFHandler creates a new aof.AofHandler
-func NewAOFHandler(db databaseface.Database) (*AofHandler, error) {
-	handler := &AofHandler{}
-	// 初始化值
-	handler.aofFilename = config.Properties.AppendFilename
-	handler.database = db
-	// 恢复文件，加载aof
-	handler.LoadAof()
-	// 加载aof,刚启动的时候需要恢复
-	aofile, err := os.OpenFile(handler.aofFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
-	if err != nil {
-		return nil, err
-	}
-	// 文件写到字段
-	handler.aofFile = aofile
-	// channel
-	handler.aofChan = make(chan *payload, aofBufferSize)
-	// 起一个线程handle
-	go func() {
-		handler.handleAof()
-	}()
-	return handler, nil
-}
-
-// AddAof send command to aof goroutine through channel
-func (handler *AofHandler) AddAof(dbIndex int, cmd CmdLine) {
-	// 判断是否打开功能
-	if config.Properties.AppendOnly && handler.aofChan != nil {
-		handler.aofChan <- &payload{
-			cmdLine: cmd,
-			dbIndex: dbIndex,
-		}
-	}
-}
-
-// handleAof listen aof channel and write into file
-func (handler *AofHandler) handleAof() {
-	handler.currentDB = 0
-	// 取出payLoad写到文件中
-	for payload := range handler.aofChan {
-		if payload.dbIndex != handler.currentDB {
-			// 插入select语句 *$5select$1[dbindex]
-			bytes := reply.MakeMultiBulkReply(utils.ToCmdLine("select", strconv.Itoa(payload.dbIndex))).ToBytes()
-			// 写到文件
-			_, err := handler.aofFile.Write(bytes)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			handler.currentDB = payload.dbIndex
-		}
-		bytes := reply.MakeMultiBulkReply(payload.cmdLine).ToBytes()
-		_, err := handler.aofFile.Write(bytes)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-	}
-}
-
-// LoadAof read aof file
+///* ---old version aof struct--- */
 //
-//	 @Description:	//直接当成用户发送的指令
-//	 @receiver server
-//		该方法会执行类似Set方法，如果执行，也会调用aof,由于还没有没有初始化aoffunc 所以是一个空方法，需要在makeDB的时候初始化
-func (handler *AofHandler) LoadAof() {
-	// aof还原（RESP协议编码）
-	file, err := os.Open(handler.aofFilename) //open只读
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	defer file.Close()
-	// File已经实现reader接口
-	ch := parser.ParseStream(file)
-	//准备一个connection，为了获取dbIndex
-	tmpConn := &connection.Connection{}
-	for p := range ch {
-		// 判断失败方法
-		if p.Err != nil {
-			if p.Err == io.EOF {
-				break
-			}
-			logger.Error(err)
-			continue
-		}
-		if p.Data == nil {
-			logger.Error("empty payload")
-			continue
-		}
-		//我们只需要MultiBulkreply
-		r, ok := p.Data.(*reply.MultiBulkReply)
-		if !ok {
-			logger.Error("exec multi mulk")
-			continue
-		}
-		// 成功方法
-		execReply := handler.database.Exec(tmpConn, r.Args)
-		if reply.IsErrorReply(execReply) {
-			logger.Error("exec err", execReply.ToBytes())
-		}
-	}
-}
+//// AofHandler receive msgs from channel and write to AOF file
+//type AofHandler struct {
+//	database    database.DB   // 用于调用Exec
+//	aofChan     chan *payload //该channel将要持久化的命令发送到异步协程
+//	aofFile     *os.File      //append file 文件描述符
+//	aofFilename string        //append file 路径
+//	currentDB   int           // 上一次写到的db
+//}
+//
+//// NewAOFHandler creates a new aof.AofHandler
+//func NewAOFHandler(db database.DB) (*AofHandler, error) {
+//	handler := &AofHandler{}
+//	// 初始化值
+//	handler.aofFilename = config.Properties.AppendFilename
+//	handler.database = db
+//	// 恢复文件，加载aof
+//	handler.LoadAof()
+//	// 加载aof,刚启动的时候需要恢复
+//	aofile, err := os.OpenFile(handler.aofFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
+//	if err != nil {
+//		return nil, err
+//	}
+//	// 文件写到字段
+//	handler.aofFile = aofile
+//	// channel
+//	handler.aofChan = make(chan *payload, aofQueueSize)
+//	// 起一个线程handle
+//	go func() {
+//		handler.handleAof()
+//	}()
+//	return handler, nil
+//}
+//
+//// AddAof send command to aof goroutine through channel
+//func (handler *AofHandler) AddAof(dbIndex int, cmd CmdLine) {
+//	// 判断是否打开功能
+//	if config.Properties.AppendOnly && handler.aofChan != nil {
+//		handler.aofChan <- &payload{
+//			cmdLine: cmd,
+//			dbIndex: dbIndex,
+//		}
+//	}
+//}
+//
+//// handleAof listen aof channel and write into file
+//func (handler *AofHandler) handleAof() {
+//	handler.currentDB = 0
+//	// 取出payLoad写到文件中
+//	for payload := range handler.aofChan {
+//		if payload.dbIndex != handler.currentDB {
+//			// 插入select语句 *$5select$1[dbindex]
+//			bytes := protocol.MakeMultiBulkReply(utils.ToCmdLine("select", strconv.Itoa(payload.dbIndex))).ToBytes()
+//			// 写到文件
+//			_, err := handler.aofFile.Write(bytes)
+//			if err != nil {
+//				logger.Error(err)
+//				continue
+//			}
+//			handler.currentDB = payload.dbIndex
+//		}
+//		bytes := protocol.MakeMultiBulkReply(payload.cmdLine).ToBytes()
+//		_, err := handler.aofFile.Write(bytes)
+//		if err != nil {
+//			logger.Error(err)
+//			continue
+//		}
+//	}
+//}
+//
+//// LoadAof read aof file
+////
+////	 @Description:	//直接当成用户发送的指令
+////	 @receiver server
+////		该方法会执行类似Set方法，如果执行，也会调用aof,由于还没有没有初始化aoffunc 所以是一个空方法，需要在makeDB的时候初始化
+//func (handler *AofHandler) LoadAof() {
+//	// aof还原（RESP协议编码）
+//	file, err := os.Open(handler.aofFilename) //open只读
+//	if err != nil {
+//		logger.Error(err)
+//		return
+//	}
+//	defer file.Close()
+//	// File已经实现reader接口
+//	ch := parser.ParseStream(file)
+//	//准备一个connection，为了获取dbIndex
+//	tmpConn := &connection.Connection{}
+//	for p := range ch {
+//		// 判断失败方法
+//		if p.Err != nil {
+//			if p.Err == io.EOF {
+//				break
+//			}
+//			logger.Error(err)
+//			continue
+//		}
+//		if p.Data == nil {
+//			logger.Error("empty payload")
+//			continue
+//		}
+//		//我们只需要MultiBulkreply
+//		r, ok := p.Data.(*protocol.MultiBulkReply)
+//		if !ok {
+//			logger.Error("exec multi mulk")
+//			continue
+//		}
+//		// 成功方法
+//		execReply := handler.database.Exec(tmpConn, r.Args)
+//		if protocol.IsErrorReply(execReply) {
+//			logger.Error("exec err", execReply.ToBytes())
+//		}
+//	}
+//}
 
 /* ---new version aof struct--- */
 
 // Persister receive msgs from channel and write to AOF file
 type Persister struct {
-	ctx         context.Context
-	cancel      context.CancelFunc
-	db          databaseface.DBEngine        // 用于调用Exec
-	tmpDBMaker  func() databaseface.DBEngine //  Function type field for generating a temporary database engine instance.
-	aofChan     chan *payload
-	aofFile     *os.File
+	ctx        context.Context
+	cancel     context.CancelFunc
+	db         database.DBEngine
+	tmpDBMaker func() database.DBEngine
+	// aofChan is the channel to receive aof payload(listenCmd will send payload to this channel)
+	aofChan chan *payload
+	// aofFile is the file handler of aof file
+	aofFile *os.File
+	// aofFilename is the path of aof file
 	aofFilename string
-	aofFsync    string
+	// aofFsync is the strategy of fsync
+	aofFsync string
 	// aof goroutine will send msg to main goroutine through this channel when aof tasks finished and ready to shut down
 	aofFinished chan struct{}
 	// pause aof for start/finish aof rewrite progress
@@ -197,13 +200,14 @@ type Persister struct {
 }
 
 // NewPersister creates a new aof.Persister
-func NewPersister(filename string, db databaseface.DBEngine, fsync string, tmpDBMaker func() databaseface.DBEngine, load bool) (*Persister, error) {
+func NewPersister(db database.DBEngine, filename string, load bool, fsync string, tmpDBMaker func() database.DBEngine) (*Persister, error) {
 	persister := &Persister{}
 	persister.aofFilename = filename
 	persister.aofFsync = strings.ToLower(fsync)
 	persister.db = db
 	persister.tmpDBMaker = tmpDBMaker
 	persister.currentDB = 0
+	// load aof file if needed
 	if load {
 		persister.LoadAof(0)
 	}
@@ -212,16 +216,17 @@ func NewPersister(filename string, db databaseface.DBEngine, fsync string, tmpDB
 		return nil, err
 	}
 	persister.aofFile = aofFile
-	persister.aofChan = make(chan *payload, aofBufferSize)
+	persister.aofChan = make(chan *payload, aofQueueSize)
 	persister.aofFinished = make(chan struct{})
 	persister.listeners = make(map[Listener]struct{})
+	// start aof goroutine to write aof file in background and fsync periodically if needed (see fsyncEverySecond)
 	go func() {
-		// 异步开启监听
 		persister.listenCmd()
 	}()
 	ctx, cancel := context.WithCancel(context.Background())
 	persister.ctx = ctx
 	persister.cancel = cancel
+	// fsync every second if needed
 	if persister.aofFsync == FsyncEverySec {
 		persister.fsyncEverySecond()
 	}
@@ -271,14 +276,14 @@ func (persister *Persister) LoadAof(maxBytes int) {
 			continue
 		}
 		//我们只需要MultiBulkreply
-		r, ok := p.Data.(*reply.MultiBulkReply)
+		r, ok := p.Data.(*protocol.MultiBulkReply)
 		if !ok {
 			logger.Error("exec multi mulk")
 			continue
 		}
 		// 执行语句
 		ret := persister.db.Exec(fakeConn, r.Args)
-		if reply.IsErrorReply(ret) {
+		if protocol.IsErrorReply(ret) {
 			logger.Error("exec err", string(ret.ToBytes()))
 		}
 		if strings.ToLower(string(r.Args[0])) == "select" {
@@ -340,7 +345,7 @@ func (persister *Persister) writeAof(p *payload) {
 		// select db
 		selectCmd := utils.ToCmdLine("SELECT", strconv.Itoa(p.dbIndex))
 		persister.buffer = append(persister.buffer, selectCmd)
-		data := reply.MakeMultiBulkReply(selectCmd).ToBytes()
+		data := protocol.MakeMultiBulkReply(selectCmd).ToBytes()
 		_, err := persister.aofFile.Write(data)
 		if err != nil {
 			logger.Warn(err)
@@ -349,7 +354,7 @@ func (persister *Persister) writeAof(p *payload) {
 		persister.currentDB = p.dbIndex
 	}
 	// save command
-	data := reply.MakeMultiBulkReply(p.cmdLine).ToBytes()
+	data := protocol.MakeMultiBulkReply(p.cmdLine).ToBytes()
 	persister.buffer = append(persister.buffer, p.cmdLine)
 	_, err := persister.aofFile.Write(data)
 	if err != nil {

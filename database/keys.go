@@ -11,7 +11,7 @@ package database
 
 import (
 	"github.com/Allen9012/Godis/aof"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"github.com/Allen9012/Godis/lib/wildcard"
@@ -51,16 +51,16 @@ func execPExpireTime(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(-2)
+		return protocol.MakeIntReply(-2)
 	}
 
 	raw, exists := db.ttlMap.Get(key)
 	if !exists {
-		return reply.MakeIntReply(-1)
+		return protocol.MakeIntReply(-1)
 	}
 	rawExpireTime, _ := raw.(time.Time)
 	expireTime := rawExpireTime.UnixMilli()
-	return reply.MakeIntReply(expireTime)
+	return protocol.MakeIntReply(expireTime)
 }
 
 func execPExpireAt(db *DB, args [][]byte) godis.Reply {
@@ -68,19 +68,19 @@ func execPExpireAt(db *DB, args [][]byte) godis.Reply {
 
 	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	expireAt := time.Unix(0, raw*int64(time.Millisecond))
 
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	db.Expire(key, expireAt)
 
 	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 func execPExpire(db *DB, args [][]byte) godis.Reply {
@@ -88,19 +88,19 @@ func execPExpire(db *DB, args [][]byte) godis.Reply {
 
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	ttl := time.Duration(ttlArg) * time.Millisecond
 
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	expireAt := time.Now().Add(ttl)
 	db.Expire(key, expireAt)
 	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 /*--- TTL 相关---*/
@@ -115,16 +115,16 @@ func execPTTL(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(-2)
+		return protocol.MakeIntReply(-2)
 	}
 
 	raw, exists := db.ttlMap.Get(key)
 	if !exists {
-		return reply.MakeIntReply(-1)
+		return protocol.MakeIntReply(-1)
 	}
 	expireTime, _ := raw.(time.Time)
 	ttl := expireTime.Sub(time.Now())
-	return reply.MakeIntReply(int64(ttl / time.Millisecond))
+	return protocol.MakeIntReply(int64(ttl / time.Millisecond))
 }
 
 // execPersist
@@ -137,17 +137,17 @@ func execPersist(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	_, exists = db.ttlMap.Get(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	db.Persist(key)
 	db.addAof(utils.ToCmdLine3("persist", args...))
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 // execExpireTime
@@ -160,16 +160,16 @@ func execExpireTime(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(-2)
+		return protocol.MakeIntReply(-2)
 	}
 
 	raw, exists := db.ttlMap.Get(key)
 	if !exists {
-		return reply.MakeIntReply(-1)
+		return protocol.MakeIntReply(-1)
 	}
 	rawExpireTime, _ := raw.(time.Time)
 	expireTime := rawExpireTime.Unix()
-	return reply.MakeIntReply(expireTime)
+	return protocol.MakeIntReply(expireTime)
 }
 
 // execExpireAt
@@ -183,18 +183,18 @@ func execExpireAt(db *DB, args [][]byte) godis.Reply {
 
 	raw, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	expireAt := time.Unix(raw, 0)
 
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	db.Expire(key, expireAt)
 	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 // execExpire
@@ -208,18 +208,18 @@ func execExpire(db *DB, args [][]byte) godis.Reply {
 
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	ttl := time.Duration(ttlArg) * time.Second
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	expireAt := time.Now().Add(ttl)
 	db.Expire(key, expireAt)
 	db.addAof(aof.MakeExpireCmd(key, expireAt).Args)
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 // execTTL returns a key's time to live in seconds
@@ -232,16 +232,16 @@ func execTTL(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	_, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeIntReply(-2)
+		return protocol.MakeIntReply(-2)
 	}
 
 	raw, exists := db.ttlMap.Get(key)
 	if !exists {
-		return reply.MakeIntReply(-1)
+		return protocol.MakeIntReply(-1)
 	}
 	expireTime, _ := raw.(time.Time)
 	ttl := expireTime.Sub(time.Now())
-	return reply.MakeIntReply(int64(ttl / time.Second))
+	return protocol.MakeIntReply(int64(ttl / time.Second))
 }
 
 //DEL
@@ -265,7 +265,7 @@ func execDel(db *DB, args [][]byte) godis.Reply {
 	if deleted > 0 {
 		db.addAof(utils.ToCmdLine3("del", args...))
 	}
-	return reply.MakeIntReply(int64(deleted))
+	return protocol.MakeIntReply(int64(deleted))
 }
 
 // execExists checks if a is existed in db
@@ -279,7 +279,7 @@ func execExists(db *DB, args [][]byte) godis.Reply {
 			count++
 		}
 	}
-	return reply.MakeIntReply(count)
+	return protocol.MakeIntReply(count)
 }
 
 // execFlushDB removes all data in current db
@@ -287,7 +287,7 @@ func execFlushDB(db *DB, args [][]byte) godis.Reply {
 	db.Flush()
 	//aof
 	db.addAof(utils.ToCmdLine3("flushdb", args...))
-	return reply.MakeOkReply()
+	return protocol.MakeOkReply()
 }
 
 // execType returns the type of entity, including: string, list, hash, set and zset
@@ -295,15 +295,15 @@ func execType(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	entity, exists := db.GetEntity(key)
 	if !exists {
-		return reply.MakeStatusReply("none")
+		return protocol.MakeStatusReply("none")
 	}
 	// TODO 增加类型
 	switch entity.Data.(type) {
 	case []byte:
-		return reply.MakeStatusReply("string")
+		return protocol.MakeStatusReply("string")
 	}
 	// 未知类型默认reply
-	return &reply.UnknowErrReply{}
+	return &protocol.UnknownErrReply{}
 }
 
 // @Description: execRename a key
@@ -313,14 +313,14 @@ func execType(db *DB, args [][]byte) godis.Reply {
 func execRename(db *DB, args [][]byte) godis.Reply {
 	//RENAME key newkey
 	if len(args) != 2 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'rename' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'rename' command")
 	}
 	src := string(args[0])
 	dest := string(args[1])
 
 	entity, ok := db.GetEntity(src)
 	if !ok {
-		return reply.MakeErrReply("no such key")
+		return protocol.MakeErrReply("no such key")
 	}
 	rawTTL, hasTTL := db.ttlMap.Get(src)
 	db.PutEntity(dest, entity)
@@ -332,7 +332,7 @@ func execRename(db *DB, args [][]byte) godis.Reply {
 		db.Expire(dest, expireTime)
 	}
 	db.addAof(utils.ToCmdLine3("rename", args...))
-	return reply.MakeOkReply()
+	return protocol.MakeOkReply()
 }
 
 // @Description: execRenameNx a key, only if the new key does not exist
@@ -342,17 +342,17 @@ func execRename(db *DB, args [][]byte) godis.Reply {
 func execRenameNx(db *DB, args [][]byte) godis.Reply {
 	//RENAMENX key newkey
 	if len(args) != 2 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'renamenx' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'renamenx' command")
 	}
 	src := string(args[0])
 	dest := string(args[1])
 	_, ok := db.GetEntity(dest)
 	if ok { // exist不满足
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 	entity, ok := db.GetEntity(src)
 	if !ok { // 找不到原来的key
-		return reply.MakeErrReply("no such key")
+		return protocol.MakeErrReply("no such key")
 	}
 	rawTTL, hasTTL := db.ttlMap.Get(src)
 	db.Removes(src)
@@ -365,7 +365,7 @@ func execRenameNx(db *DB, args [][]byte) godis.Reply {
 	}
 	//aof
 	db.addAof(utils.ToCmdLine3("renamenx", args...))
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 //	@Description: execKeys returns all keys matching the given pattern
@@ -385,5 +385,5 @@ func execKeys(db *DB, args [][]byte) godis.Reply {
 		}
 		return true
 	})
-	return reply.MakeMultiBulkReply(result)
+	return protocol.MakeMultiBulkReply(result)
 }

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
 	"io"
@@ -101,7 +101,7 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 				}
 				if state.expectedArgsCount == 0 {
 					ch <- &PayLoad{
-						Data: reply.MakeEmptyMultiBulkReply(),
+						Data: protocol.MakeEmptyMultiBulkReply(),
 					}
 					state = readState{}
 					continue
@@ -116,13 +116,13 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 				}
 				// 空指令
 				if state.bulkLen == -1 { // $-1\r\n
-					ch <- &PayLoad{Data: reply.MakeNullBulkReply()}
+					ch <- &PayLoad{Data: protocol.MakeNullBulkReply()}
 					state = readState{}
 					continue
 				}
 			case '+': // status reply
 				content := strings.TrimSuffix(string(line[1:]), "\r\n")
-				ch <- &PayLoad{Data: reply.MakeStatusReply(content)}
+				ch <- &PayLoad{Data: protocol.MakeStatusReply(content)}
 				// TODO RDB action
 				//if strings.HasPrefix(content, "FULLRESYNC") {
 				//	err = parseRDBBulkString(reader, ch)
@@ -135,7 +135,7 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 				continue
 			case '-': // error reply
 				content := strings.TrimSuffix(string(line[1:]), "\r\n")
-				ch <- &PayLoad{Data: reply.MakeErrReply(content)}
+				ch <- &PayLoad{Data: protocol.MakeErrReply(content)}
 				continue
 			case ':': // int reply
 				content := strings.TrimSuffix(string(line[1:]), "\r\n")
@@ -144,13 +144,13 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 					logger.Error(err)
 					ch <- &PayLoad{Err: protocolError(string(line[1:]))}
 				}
-				ch <- &PayLoad{Data: reply.MakeIntReply(val)}
+				ch <- &PayLoad{Data: protocol.MakeIntReply(val)}
 				continue
 			default:
 				// parse as text protocol
 				content := line[:len(line)-2]
 				args := bytes.Split(content, []byte{' '})
-				ch <- &PayLoad{Data: reply.MakeMultiBulkReply(args)}
+				ch <- &PayLoad{Data: protocol.MakeMultiBulkReply(args)}
 				state = readState{} // reset state
 				continue
 			}
@@ -166,9 +166,9 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 			if state.finished() {
 				var result godis.Reply
 				if state.msgType == '*' {
-					result = reply.MakeMultiBulkReply(state.args)
+					result = protocol.MakeMultiBulkReply(state.args)
 				} else if state.msgType == '$' {
-					result = reply.MakeBulkReply(state.args[0])
+					result = protocol.MakeBulkReply(state.args[0])
 				}
 				ch <- &PayLoad{
 					Data: result,
@@ -189,7 +189,7 @@ func parse0(rawReader io.Reader, ch chan<- *PayLoad) {
 //	@return bool	是否有IO错误
 //	@return error
 func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
-	//特殊情况： *3\r\n$3\r\n$7\r\n[k\r\ney]\r\n$5\r\nvalue\r\n
+	//特殊情况： *3\r\n$3 \r\n$7\r\n[k\r\ney]\r\n$5\r\nvalue\r\n
 	//1. \r\n切分行
 	//2. 如果有$数字，表示严格读取 \r\n是数据本身不能分行
 	var line []byte

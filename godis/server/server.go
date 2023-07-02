@@ -7,7 +7,7 @@ import (
 	"github.com/Allen9012/Godis/database"
 	"github.com/Allen9012/Godis/godis/connection"
 	"github.com/Allen9012/Godis/godis/parser"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	databaseface "github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/sync/atomic"
@@ -23,20 +23,18 @@ import (
 @desc: // A tcp.Handler implements redis protocol
 */
 
-var unknownErrReplyBytes = []byte("-ERR unknown\r\n")
-
 type Handler struct {
 	activeConn sync.Map // *client -> placeholder
-	db         databaseface.Database
+	db         databaseface.DB
 	closing    atomic.Boolean // refusing new client and new request
 }
 
 func MakeHandler() *Handler {
-	var db databaseface.Database
+	var db databaseface.DB
 	if config.Properties.ClusterEnable {
 		db = cluster.MakeClusterDatabase()
 	} else {
-		db = database.NewStandaloneDatabase()
+		db = database.NewStandaloneServer()
 	}
 	return &Handler{
 		db: db,
@@ -77,15 +75,15 @@ func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
 				strings.Contains(payload.Err.Error(), "use of closed network connection") {
 				// 果断断开连接就可以
 				h.closeClient(client)
-				logger.Info("connection closed: " + client.RemoteAddr().String())
+				logger.Info("connection closed: " + client.RemoteAddr())
 				return
 			}
 			// protocol err
-			errReply := reply.MakeErrReply(payload.Err.Error())
-			err := client.Write(errReply.ToBytes())
+			errReply := protocol.MakeErrReply(payload.Err.Error())
+			_, err := client.Write(errReply.ToBytes())
 			if err != nil {
 				h.closeClient(client)
-				logger.Info("connection closed: " + client.RemoteAddr().String())
+				logger.Info("connection closed: " + client.RemoteAddr())
 				return
 			}
 			continue
@@ -93,20 +91,20 @@ func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
 		// exec
 		if payload.Data == nil {
 			// 啥也没发
-			logger.Info("send nothing: " + client.RemoteAddr().String())
+			logger.Info("send nothing: " + client.RemoteAddr())
 			continue
 		}
-		multiBulkReply, ok := payload.Data.(*reply.MultiBulkReply)
+		multiBulkReply, ok := payload.Data.(*protocol.MultiBulkReply)
 		if !ok {
 			logger.Error("require multi bulk reply")
 			continue
 		}
 		result := h.db.Exec(client, multiBulkReply.Args)
 		if result != nil {
-			_ = client.Write(result.ToBytes())
+			_, _ = client.Write(result.ToBytes())
 		} else {
 			// 结果为空， 未知错误
-			_ = client.Write(unknownErrReplyBytes)
+			_, _ = client.Write(protocol.MakeUnknowErrReply().ToBytes())
 		}
 	}
 }

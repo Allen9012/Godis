@@ -12,7 +12,7 @@ package aof
 import (
 	"github.com/Allen9012/Godis/datastruct/dict"
 	List "github.com/Allen9012/Godis/datastruct/list"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"strconv"
 	"time"
@@ -21,20 +21,20 @@ import (
 var pExpireAtBytes = []byte("PEXPIREAT") //设置过期时间的命令
 
 // MakeExpireCmd generates command line to set expiration for the given key
-func MakeExpireCmd(key string, expireAt time.Time) *reply.MultiBulkReply {
+func MakeExpireCmd(key string, expireAt time.Time) *protocol.MultiBulkReply {
 	args := make([][]byte, 3)
 	args[0] = pExpireAtBytes
 	args[1] = []byte(key)
 	args[2] = []byte(strconv.FormatInt(expireAt.UnixNano()/1e6, 10))
-	return reply.MakeMultiBulkReply(args)
+	return protocol.MakeMultiBulkReply(args)
 }
 
 // EntityToCmd serialize data entity to redis command
-func EntityToCmd(key string, entity *database.DataEntity) *reply.MultiBulkReply {
+func EntityToCmd(key string, entity *database.DataEntity) *protocol.MultiBulkReply {
 	if entity == nil {
 		return nil
 	}
-	var cmd *reply.MultiBulkReply
+	var cmd *protocol.MultiBulkReply
 	switch val := entity.Data.(type) {
 	case []byte:
 		cmd = stringToCmd(key, val)
@@ -52,17 +52,17 @@ func EntityToCmd(key string, entity *database.DataEntity) *reply.MultiBulkReply 
 
 var setCmd = []byte("SET")
 
-func stringToCmd(key string, bytes []byte) *reply.MultiBulkReply {
+func stringToCmd(key string, bytes []byte) *protocol.MultiBulkReply {
 	args := make([][]byte, 3)
 	args[0] = setCmd
 	args[1] = []byte(key)
 	args[2] = bytes
-	return reply.MakeMultiBulkReply(args)
+	return protocol.MakeMultiBulkReply(args)
 }
 
 var rPushAllCmd = []byte("RPUSH")
 
-func listToCmd(key string, list List.List) *reply.MultiBulkReply {
+func listToCmd(key string, list List.List) *protocol.MultiBulkReply {
 	args := make([][]byte, 2+list.Len())
 	args[0] = rPushAllCmd
 	args[1] = []byte(key)
@@ -71,7 +71,7 @@ func listToCmd(key string, list List.List) *reply.MultiBulkReply {
 		args[2+i] = bytes
 		return true
 	})
-	return reply.MakeMultiBulkReply(args)
+	return protocol.MakeMultiBulkReply(args)
 }
 
 //var sAddCmd = []byte("SADD")
@@ -91,7 +91,7 @@ func listToCmd(key string, list List.List) *reply.MultiBulkReply {
 
 var hMSetCmd = []byte("HMSET")
 
-func hashToCmd(key string, hash dict.Dict) *reply.MultiBulkReply {
+func hashToCmd(key string, hash dict.Dict) *protocol.MultiBulkReply {
 	args := make([][]byte, 2+hash.Len()*2)
 	args[0] = hMSetCmd
 	args[1] = []byte(key)
@@ -103,7 +103,7 @@ func hashToCmd(key string, hash dict.Dict) *reply.MultiBulkReply {
 		i++
 		return true
 	})
-	return reply.MakeMultiBulkReply(args)
+	return protocol.MakeMultiBulkReply(args)
 }
 
 //var zAddCmd = []byte("ZADD")

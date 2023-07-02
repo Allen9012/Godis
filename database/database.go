@@ -1,18 +1,14 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/2/25
-	@desc: //DB
-
-*
-*/
 package database
 
+/*
+	@author: Allen
+	@since: 2023/2/25
+	@desc: database
+*/
 import (
 	"github.com/Allen9012/Godis/datastruct/dict"
 	"github.com/Allen9012/Godis/datastruct/lock"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
@@ -29,14 +25,23 @@ const (
 
 // DB stores data and execute user's commands
 type DB struct {
-	index  int
-	data   dict.Dict
-	addAof func(CmdLine)
-	// 增加过期时间功能
+	index int
+	// key -> DataEntity
+	data dict.Dict
+	// key -> expireTime (time.Time)
 	ttlMap dict.Dict // key -> expireTime (time.Time)
+	// key -> version(uint32)
+	// TODO versionMap is not used now
+	versionMap dict.Dict
+	// addaof is used to add command to aof
+	addAof func(CmdLine)
+	// TODO 优化掉 locker
 	// dict.Dict will ensure concurrent-safety of its method
 	// use this mutex for complicated command only, eg. rpush, incr ...
 	locker *lock.Locks
+	//// TODO callbacks
+	//insertCallback database.KeyEventCallback
+	//deleteCallback database.KeyEventCallback
 }
 
 // ExecFunc 统一执行方法
@@ -54,25 +59,26 @@ func makeDB() *DB {
 		//修改一个bug，增加一个空的实现
 		addAof: func(line CmdLine) {},
 		// 初始化map 赋值一个SyncMap
-		ttlMap: dict.MakeSyncDict(),
-		locker: lock.Make(lockerSize),
+		ttlMap:     dict.MakeSyncDict(),
+		versionMap: dict.MakeSyncDict(),
+		locker:     lock.Make(lockerSize),
 	}
 	return db
 }
 
-//// makeBasicDB create DB instance only with basic abilities.
-//func makeBasicDB() *DB {
-//	db := &DB{
-//		data:       dict.MakeConcurrent(dataDictSize),
-//		ttlMap:     dict.MakeConcurrent(ttlDictSize),
-//		versionMap: dict.MakeConcurrent(dataDictSize),
-//		addAof:     func(line CmdLine) {},
-//	}
-//	return db
-//}
+// makeBasicDB create DB instance only with basic abilities.
+func makeBasicDB() *DB {
+	db := &DB{
+		data:       dict.MakeSyncDict(),
+		ttlMap:     dict.MakeSyncDict(),
+		versionMap: dict.MakeSyncDict(),
+		addAof:     func(line CmdLine) {},
+	}
+	return db
+}
 
 // Exec executes command within one database
-//
+//	TODO 优化Exec方法
 //	@Description:
 //	@receiver db*
 //	@param connection
@@ -82,14 +88,48 @@ func (db *DB) Exec(connection godis.Connection, cmdLine CmdLine) godis.Reply {
 	cmdName := strings.ToLower(string(cmdLine[0]))
 	cmd, ok := cmdTable[cmdName]
 	if !ok {
-		return reply.MakeErrReply("ERR unknown command " + cmdName)
+		return protocol.MakeErrReply("ERR unknown command " + cmdName)
 	}
 	// 校验arity是否合法
 	if !validateArity(cmd.arity, cmdLine) {
-		return reply.MakeArgNumErrReply(cmdName)
+		return protocol.MakeArgNumErrReply(cmdName)
 	}
-	fun := cmd.exector
+	fun := cmd.executor
 	// SET K V ->K V
+	return fun(db, cmdLine[1:])
+}
+
+// TODO 优化实现prepare
+//func (db *DB) execNormalCommand(cmdLine [][]byte) godis.Reply {
+//	cmdName := strings.ToLower(string(cmdLine[0]))
+//	cmd, ok := cmdTable[cmdName]
+//	if !ok {
+//		return protocol.MakeErrReply("ERR unknown command '" + cmdName + "'")
+//	}
+//	if !validateArity(cmd.arity, cmdLine) {
+//		return protocol.MakeArgNumErrReply(cmdName)
+//	}
+//
+//	prepare := cmd.prepare
+//	write, read := prepare(cmdLine[1:])
+//	db.addVersion(write...)
+//	db.RWLocks(write, read)
+//	defer db.RWUnLocks(write, read)
+//	fun := cmd.executor
+//	return fun(db, cmdLine[1:])
+//}
+
+// execWithLock executes normal commands, invoker should provide locks
+func (db *DB) execWithLock(cmdLine [][]byte) godis.Reply {
+	cmdName := strings.ToLower(string(cmdLine[0]))
+	cmd, ok := cmdTable[cmdName]
+	if !ok {
+		return protocol.MakeErrReply("ERR unknown command '" + cmdName + "'")
+	}
+	if !validateArity(cmd.arity, cmdLine) {
+		return protocol.MakeArgNumErrReply(cmdName)
+	}
+	fun := cmd.executor
 	return fun(db, cmdLine[1:])
 }
 
@@ -190,7 +230,7 @@ func genExpireTask(key string) string {
 	return "expire:" + key
 }
 
-/* ---- Lock Function ----- */
+/* TODO 优化---- Lock Function ----- */
 
 // RWLocks lock keys for writing and reading
 // 封装读写锁
@@ -242,4 +282,18 @@ func (db *DB) Persist(key string) {
 	taskKey := genExpireTask(key)
 	// 调用第三方库删除倒计时
 	timewheel.Cancel(taskKey)
+}
+
+func (db *DB) ForEach(cb func(key string, data *database.DataEntity, expiration *time.Time) bool) {
+	db.data.ForEach(func(key string, raw interface{}) bool {
+		entity, _ := raw.(*database.DataEntity)
+		var expiration *time.Time
+		rawExpireTime, ok := db.ttlMap.Get(key)
+		if ok {
+			expireTime, _ := rawExpireTime.(time.Time)
+			expiration = &expireTime
+		}
+
+		return cb(key, entity, expiration)
+	})
 }

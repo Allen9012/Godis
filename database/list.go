@@ -2,7 +2,7 @@ package database
 
 import (
 	List "github.com/Allen9012/Godis/datastruct/list"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
@@ -31,14 +31,14 @@ func init() {
 
 /*--- 辅助函数 ---*/
 // 返回List类型的value
-func (db *DB) getAsList(key string) (List.List, reply.ErrorReply) {
+func (db *DB) getAsList(key string) (List.List, protocol.ErrorReply) {
 	entity, ok := db.GetEntity(key)
 	if !ok {
 		return nil, nil
 	}
 	list, ok := entity.Data.(List.List)
 	if !ok {
-		return nil, reply.MakeWrongTypeErrReply()
+		return nil, protocol.MakeWrongTypeErrReply()
 	}
 	return list, nil
 }
@@ -51,7 +51,7 @@ func (db *DB) getAsList(key string) (List.List, reply.ErrorReply) {
 //	@return list
 //	@return isNew
 //	@return errReply
-func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply reply.ErrorReply) {
+func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply protocol.ErrorReply) {
 	list, errReply = db.getAsList(key)
 	if errReply != nil {
 		return nil, false, errReply
@@ -75,18 +75,18 @@ func (db *DB) getOrInitList(key string) (list List.List, isNew bool, errReply re
 //	@return redis.Reply
 func execLRange(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 3 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'LRange' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'LRange' command")
 	}
 	// parse args
 	key := string(args[0])
 	start64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	start := int(start64)
 	stop64, err := strconv.ParseInt(string(args[2]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	stop := int(stop64)
 	// get data
@@ -95,7 +95,7 @@ func execLRange(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeEmptyMultiBulkReply()
+		return protocol.MakeEmptyMultiBulkReply()
 	}
 
 	// compute index
@@ -105,7 +105,7 @@ func execLRange(db *DB, args [][]byte) godis.Reply {
 	} else if start < 0 {
 		start = size + start
 	} else if start >= size {
-		return reply.MakeEmptyMultiBulkReply()
+		return protocol.MakeEmptyMultiBulkReply()
 	}
 	if stop < -1*size {
 		stop = 0
@@ -126,7 +126,7 @@ func execLRange(db *DB, args [][]byte) godis.Reply {
 		bytes, _ := raw.([]byte)
 		result[i] = bytes
 	}
-	return reply.MakeMultiBulkReply(result)
+	return protocol.MakeMultiBulkReply(result)
 }
 
 // Sets the list element at index to element.
@@ -138,7 +138,7 @@ func execLSet(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	index := int(index64)
 	value := args[2]
@@ -149,21 +149,21 @@ func execLSet(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeErrReply("ERR no such key")
+		return protocol.MakeErrReply("ERR no such key")
 	}
 
 	size := list.Len() // assert: size > 0
 	if index < -1*size {
-		return reply.MakeErrReply("ERR index out of range")
+		return protocol.MakeErrReply("ERR index out of range")
 	} else if index < 0 {
 		index = size + index
 	} else if index >= size {
-		return reply.MakeErrReply("ERR index out of range")
+		return protocol.MakeErrReply("ERR index out of range")
 	}
 
 	list.Set(index, value)
 	db.addAof(utils.ToCmdLine3("lset", args...))
-	return reply.MakeOkReply()
+	return protocol.MakeOkReply()
 }
 
 // LSET key index element
@@ -209,7 +209,7 @@ func execLIndex(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	index64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	index := int(index64)
 
@@ -219,20 +219,20 @@ func execLIndex(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 
 	size := list.Len() // assert: size > 0
 	if index < -1*size {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	} else if index < 0 {
 		index = size + index
 	} else if index >= size {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 
 	val, _ := list.Get(index).([]byte)
-	return reply.MakeBulkReply(val)
+	return protocol.MakeBulkReply(val)
 }
 
 // execLLen gets length of list
@@ -249,10 +249,10 @@ func execLLen(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 	size := int64(list.Len())
-	return reply.MakeIntReply(size)
+	return protocol.MakeIntReply(size)
 }
 
 // Removes the first count occurrences of elements equal to element from the list stored at key.
@@ -270,7 +270,7 @@ func execLRem(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	count64, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	count := int(count64)
 	value := args[2]
@@ -281,7 +281,7 @@ func execLRem(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	var removed int
@@ -304,7 +304,7 @@ func execLRem(db *DB, args [][]byte) godis.Reply {
 	if removed > 0 {
 		db.addAof(utils.ToCmdLine3("lrem", args...))
 	}
-	return reply.MakeIntReply(int64(removed))
+	return protocol.MakeIntReply(int64(removed))
 }
 
 // execRPopLPush pops last element of list-A then insert it to the head of list-B
@@ -323,7 +323,7 @@ func execRPopLPush(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if sourceList == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 
 	// get dest entity
@@ -341,7 +341,7 @@ func execRPopLPush(db *DB, args [][]byte) godis.Reply {
 	}
 
 	db.addAof(utils.ToCmdLine3("rpoplpush", args...))
-	return reply.MakeBulkReply(val)
+	return protocol.MakeBulkReply(val)
 }
 
 func undoRPopLPush(db *DB, args [][]byte) []CmdLine {
@@ -383,7 +383,7 @@ func execRPop(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 
 	val, _ := list.RemoveLast().([]byte)
@@ -391,7 +391,7 @@ func execRPop(db *DB, args [][]byte) godis.Reply {
 		db.Remove(key)
 	}
 	db.addAof(utils.ToCmdLine3("rpop", args...))
-	return reply.MakeBulkReply(val)
+	return protocol.MakeBulkReply(val)
 }
 
 var rPushCmd = []byte("RPUSH")
@@ -430,7 +430,7 @@ func execLPop(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 
 	val, _ := list.Remove(0).([]byte)
@@ -438,7 +438,7 @@ func execLPop(db *DB, args [][]byte) godis.Reply {
 		db.Remove(key)
 	}
 	db.addAof(utils.ToCmdLine3("lpop", args...))
-	return reply.MakeBulkReply(val)
+	return protocol.MakeBulkReply(val)
 }
 
 func undoLPop(db *DB, args [][]byte) []CmdLine {
@@ -467,7 +467,7 @@ func undoLPop(db *DB, args [][]byte) []CmdLine {
 // @return resp.Reply
 func execRPushX(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 2 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'rpushx' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'rpushx' command")
 	}
 	// parse args
 	key := string(args[0])
@@ -479,14 +479,14 @@ func execRPushX(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 	//put list
 	for _, value := range values {
 		list.Add(value)
 	}
 	db.addAof(utils.ToCmdLine3("rpushx", args...))
-	return reply.MakeIntReply(int64(list.Len()))
+	return protocol.MakeIntReply(int64(list.Len()))
 }
 
 var lPushCmd = []byte("LPUSH")
@@ -499,7 +499,7 @@ var lPushCmd = []byte("LPUSH")
 //	@return redis.Reply
 func execRPush(db *DB, args [][]byte) godis.Reply {
 	if len(args) < 2 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'rpush' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'rpush' command")
 	}
 	// parse args
 	key := string(args[0])
@@ -516,7 +516,7 @@ func execRPush(db *DB, args [][]byte) godis.Reply {
 		list.Add(value)
 	}
 	db.addAof(utils.ToCmdLine3("rpush", args...))
-	return reply.MakeIntReply(int64(list.Len()))
+	return protocol.MakeIntReply(int64(list.Len()))
 }
 
 // execLPushX inserts element at head of list, only if list exists
@@ -534,7 +534,7 @@ func execLPushX(db *DB, args [][]byte) godis.Reply {
 		return errReply
 	}
 	if list == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 
 	//insert
@@ -542,7 +542,7 @@ func execLPushX(db *DB, args [][]byte) godis.Reply {
 		list.Insert(0, value)
 	}
 	db.addAof(utils.ToCmdLine3("lpushx", args...))
-	return reply.MakeIntReply(int64(list.Len()))
+	return protocol.MakeIntReply(int64(list.Len()))
 }
 
 // execLPush
@@ -566,7 +566,7 @@ func execLPush(db *DB, args [][]byte) godis.Reply {
 		list.Insert(0, value)
 	}
 	db.addAof(utils.ToCmdLine3("lpush", args...))
-	return reply.MakeIntReply(int64(list.Len()))
+	return protocol.MakeIntReply(int64(list.Len()))
 }
 
 func undoLPush(db *DB, args [][]byte) []CmdLine {

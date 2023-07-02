@@ -13,7 +13,7 @@ import (
 	"context"
 	"errors"
 	"github.com/Allen9012/Godis/godis/client"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"strconv"
@@ -78,7 +78,7 @@ func (cluster *ClusterDatabase) relay(peer string, c godis.Connection, args [][]
 	}
 	peerClient, err := cluster.getPeerClient(peer)
 	if err != nil {
-		return reply.MakeErrReply(err.Error())
+		return protocol.MakeErrReply(err.Error())
 	}
 	defer func() {
 		_ = cluster.returnPeerClient(peer, peerClient)

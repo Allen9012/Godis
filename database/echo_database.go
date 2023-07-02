@@ -10,7 +10,7 @@
 package database
 
 import (
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 )
 
@@ -22,7 +22,7 @@ func NewEchoDatabase() *EchoDatabase {
 }
 
 func (e EchoDatabase) Exec(client godis.Connection, args [][]byte) godis.Reply {
-	return reply.MakeMultiBulkReply(args)
+	return protocol.MakeMultiBulkReply(args)
 }
 
 func (e EchoDatabase) Close() {

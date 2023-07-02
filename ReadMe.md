@@ -1,3 +1,11 @@
+## 7/2 优化
++ 优化standalone_server 执行方法 
++ 客户端conn， 优化使用sync.Pool缓冲池 
++ 增加封装aofHandler进入persistance 持久化机制 
++ 重命名和修改一些细节
++ 修改之后集群模式可能有一点问题
++ StandaloneServer实现了DBEngine不只是DB
++ 需要优化很多地方：prepare和undo模式， slave很久之后优化，conn的优化 ，database.db的优化
 ## 配置方式和补充
 1. 如果使用的方式是Config方式：
 2. 如果配置了集群方式的话IsCluster = true，就需要给出ClusterConfigPath否则error，配置方式须为Json格式

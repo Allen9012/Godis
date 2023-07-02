@@ -10,7 +10,7 @@
 package cluster
 
 import (
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 )
 
@@ -27,16 +27,16 @@ import (
 // 3. 返回响应
 func FlushDB(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
 	replies := cluster.broadcast(c, args)
-	var errReply reply.ErrorReply
+	var errReply protocol.ErrorReply
 	for _, v := range replies {
-		if reply.IsErrorReply(v) {
-			errReply = v.(reply.ErrorReply)
+		if protocol.IsErrorReply(v) {
+			errReply = v.(protocol.ErrorReply)
 			break
 		}
 	}
 	// 没有错误
 	if errReply == nil {
-		return &reply.OkReply{}
+		return &protocol.OkReply{}
 	}
-	return reply.MakeErrReply("error occurs: " + errReply.Error())
+	return protocol.MakeErrReply("error occurs: " + errReply.Error())
 }

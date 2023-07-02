@@ -1,19 +1,22 @@
-package reply
+package protocol
 
 // 常见错误回复
 
-// UnknowErrReply 未知错误回复
-type UnknowErrReply struct {
-}
+// UnknownErrReply 未知错误回复
+type UnknownErrReply struct{}
 
-var unknowErrBytes = []byte("-Err unknown\r\n")
+var unknownErrBytes = []byte("-Err unknown\r\n")
 
-func (r UnknowErrReply) Error() string {
+func (r *UnknownErrReply) Error() string {
 	return "Err unknown"
 }
 
-func (r UnknowErrReply) ToBytes() []byte {
-	return unknowErrBytes
+func (r *UnknownErrReply) ToBytes() []byte {
+	return unknownErrBytes
+}
+
+func MakeUnknowErrReply() *UnknownErrReply {
+	return &UnknownErrReply{}
 }
 
 // ArgNumErrReply represents wrong number of arguments for command
@@ -89,5 +92,5 @@ func (r *ProtocolErrReply) ToBytes() []byte {
 }
 
 func (r *ProtocolErrReply) Error() string {
-	return "ERR Protocol error: '" + r.Msg
+	return "ERR Protocol error: '" + r.Msg + "' command"
 }

@@ -2,7 +2,7 @@ package parser
 
 import (
 	"bytes"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"io"
@@ -19,26 +19,26 @@ import (
 
 func Test_parse_stream(t *testing.T) {
 	replies := []godis.Reply{
-		reply.MakeIntReply(1),
-		reply.MakeStatusReply("OK"),
-		reply.MakeErrReply("ERR unknown"),
-		reply.MakeBulkReply([]byte("a\r\nb")), // test binary safe
-		reply.MakeNullBulkReply(),
-		reply.MakeMultiBulkReply([][]byte{
+		protocol.MakeIntReply(1),
+		protocol.MakeStatusReply("OK"),
+		protocol.MakeErrReply("ERR unknown"),
+		protocol.MakeBulkReply([]byte("a\r\nb")), // test binary safe
+		protocol.MakeNullBulkReply(),
+		protocol.MakeMultiBulkReply([][]byte{
 			[]byte("a"),
 			[]byte("\r\n"),
 		}),
-		reply.MakeEmptyMultiBulkReply(),
+		protocol.MakeEmptyMultiBulkReply(),
 	}
 
 	reqs := bytes.Buffer{}
 	for _, re := range replies {
 		reqs.Write(re.ToBytes())
 	}
-	reqs.Write([]byte("set a a" + reply.CRLF)) // test text protocol
+	reqs.Write([]byte("set a a" + protocol.CRLF)) // test text protocol
 	expected := make([]godis.Reply, len(replies))
 	copy(expected, replies)
-	expected = append(expected, reply.MakeMultiBulkReply([][]byte{
+	expected = append(expected, protocol.MakeMultiBulkReply([][]byte{
 		[]byte("set"), []byte("a"), []byte("a"),
 	}))
 	ch := ParseStream(bytes.NewReader(reqs.Bytes()))
@@ -66,16 +66,16 @@ func Test_parse_stream(t *testing.T) {
 
 func Test_parse_one(t *testing.T) {
 	replies := []godis.Reply{
-		reply.MakeIntReply(1),
-		reply.MakeStatusReply("OK"),
-		reply.MakeErrReply("ERR unknown"),
-		reply.MakeBulkReply([]byte("a\r\nb")), // test binary safe
-		reply.MakeNullBulkReply(),
-		reply.MakeMultiBulkReply([][]byte{
+		protocol.MakeIntReply(1),
+		protocol.MakeStatusReply("OK"),
+		protocol.MakeErrReply("ERR unknown"),
+		protocol.MakeBulkReply([]byte("a\r\nb")), // test binary safe
+		protocol.MakeNullBulkReply(),
+		protocol.MakeMultiBulkReply([][]byte{
 			[]byte("a"),
 			[]byte("\r\n"),
 		}),
-		reply.MakeEmptyMultiBulkReply(),
+		protocol.MakeEmptyMultiBulkReply(),
 	}
 	for _, re := range replies {
 		result, err := ParseOne(re.ToBytes())

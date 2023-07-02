@@ -188,3 +188,7 @@ func parse(src io.Reader) *ServerProperties {
 	}
 	return config
 }
+
+func GetTmpDir() string {
+	return Properties.Dir + "/tmp"
+}

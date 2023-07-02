@@ -1,4 +1,4 @@
-package reply
+package protocol
 
 import (
 	"bytes"
@@ -59,6 +59,20 @@ func MakeMultiBulkReply(arg [][]byte) *MultiBulkReply {
 	return &MultiBulkReply{Args: arg}
 }
 
+/* ---- Multi Raw Reply ---- */
+
+// MultiRawReply store complex list structure, for example GeoPos command
+type MultiRawReply struct {
+	Replies []godis.Reply
+}
+
+// MakeMultiRawReply creates MultiRawReply
+func MakeMultiRawReply(replies []godis.Reply) *MultiRawReply {
+	return &MultiRawReply{
+		Replies: replies,
+	}
+}
+
 /* ---- Status Reply ---- */
 
 // StatusReply stores a simple status string	+OK\r\n
@@ -76,6 +90,11 @@ func MakeStatusReply(status string) *StatusReply {
 // ToBytes marshal redis.Reply
 func (r *StatusReply) ToBytes() []byte {
 	return []byte("+" + r.Status + CRLF)
+}
+
+// IsOKReply returns true if the given protocol is +OK
+func IsOKReply(reply godis.Reply) bool {
+	return string(reply.ToBytes()) == "+OK\r\n"
 }
 
 /* ---- Int Reply ---- */

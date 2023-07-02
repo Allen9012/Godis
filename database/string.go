@@ -8,7 +8,7 @@ package database
 import (
 	"github.com/Allen9012/Godis/aof"
 	"github.com/Allen9012/Godis/datastruct/bitmap"
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
@@ -74,14 +74,14 @@ func init() {
 //	@param key
 //	@return []byte
 //	@return reply.ErrorReply
-func (db *DB) getAsString(key string) ([]byte, reply.ErrorReply) {
+func (db *DB) getAsString(key string) ([]byte, protocol.ErrorReply) {
 	entity, ok := db.GetEntity(key)
 	if !ok {
 		return nil, nil
 	}
 	bytes, ok := entity.Data.([]byte)
 	if !ok {
-		return nil, &reply.WrongTypeErrReply{}
+		return nil, &protocol.WrongTypeErrReply{}
 	}
 	return bytes, nil
 }
@@ -104,7 +104,7 @@ func execBitPos(db *DB, args [][]byte) godis.Reply {
 		return err
 	}
 	if bs == nil {
-		return reply.MakeIntReply(-1)
+		return protocol.MakeIntReply(-1)
 	}
 	valStr := string(args[1])
 	var v byte
@@ -113,7 +113,7 @@ func execBitPos(db *DB, args [][]byte) godis.Reply {
 	} else if valStr == "0" {
 		v = 0
 	} else {
-		return reply.MakeErrReply("ERR bit is not an integer or out of range")
+		return protocol.MakeErrReply("ERR bit is not an integer or out of range")
 	}
 	byteMode := true
 	if len(args) > 4 {
@@ -123,7 +123,7 @@ func execBitPos(db *DB, args [][]byte) godis.Reply {
 		} else if mode == "byte" {
 			byteMode = true
 		} else {
-			return reply.MakeErrReply("ERR syntax error")
+			return protocol.MakeErrReply("ERR syntax error")
 		}
 	}
 	var size int64
@@ -139,15 +139,15 @@ func execBitPos(db *DB, args [][]byte) godis.Reply {
 		var startIdx, endIdx int64
 		startIdx, err2 = strconv.ParseInt(string(args[2]), 10, 64)
 		if err2 != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		endIdx, err2 = strconv.ParseInt(string(args[3]), 10, 64)
 		if err2 != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		beg, end = utils.ConvertRange(startIdx, endIdx, size)
 		if beg < 0 {
-			return reply.MakeIntReply(0)
+			return protocol.MakeIntReply(0)
 		}
 	}
 	if byteMode {
@@ -162,7 +162,7 @@ func execBitPos(db *DB, args [][]byte) godis.Reply {
 		}
 		return true
 	})
-	return reply.MakeIntReply(offset)
+	return protocol.MakeIntReply(offset)
 }
 
 // execBitCount
@@ -182,7 +182,7 @@ func execBitCount(db *DB, args [][]byte) godis.Reply {
 		return err
 	}
 	if bs == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 	byteMode := true
 	if len(args) > 3 {
@@ -191,7 +191,7 @@ func execBitCount(db *DB, args [][]byte) godis.Reply {
 			byteMode = false
 		} else if mode == "byte" {
 		} else {
-			return reply.MakeSyntaxErrReply()
+			return protocol.MakeSyntaxErrReply()
 		}
 	}
 	var size int64
@@ -207,15 +207,15 @@ func execBitCount(db *DB, args [][]byte) godis.Reply {
 		var startIdx, endIdx int64
 		startIdx, err2 = strconv.ParseInt(string(args[1]), 10, 64)
 		if err2 != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		endIdx, err2 = strconv.ParseInt(string(args[2]), 10, 64)
 		if err2 != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		begin, end = utils.ConvertRange(startIdx, endIdx, size)
 		if begin < 0 {
-			return reply.MakeIntReply(0)
+			return protocol.MakeIntReply(0)
 		}
 	}
 	var count int64
@@ -232,7 +232,7 @@ func execBitCount(db *DB, args [][]byte) godis.Reply {
 			return true
 		})
 	}
-	return reply.MakeIntReply(count)
+	return protocol.MakeIntReply(count)
 }
 
 // execGetBit
@@ -249,17 +249,17 @@ func execGetBit(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	offset, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR bit offset is not an integer or out of range")
+		return protocol.MakeErrReply("ERR bit offset is not an integer or out of range")
 	}
 	bs, errorReply := db.getAsString(key)
 	if errorReply != nil {
 		return errorReply
 	}
 	if bs == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
 	bm := bitmap.FromBytes(bs)
-	return reply.MakeIntReply(int64(bm.GetBit(offset)))
+	return protocol.MakeIntReply(int64(bm.GetBit(offset)))
 }
 
 // execSetBit
@@ -276,7 +276,7 @@ func execSetBit(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	offset, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR bit offset is not an integer or out of range")
+		return protocol.MakeErrReply("ERR bit offset is not an integer or out of range")
 	}
 	valStr := string(args[2])
 	var v byte
@@ -285,7 +285,7 @@ func execSetBit(db *DB, args [][]byte) godis.Reply {
 	} else if valStr == "0" {
 		v = 0
 	} else {
-		return reply.MakeErrReply("ERR bit is not an integer or out of range")
+		return protocol.MakeErrReply("ERR bit is not an integer or out of range")
 	}
 	bs, errReply := db.getAsString(key)
 	if errReply != nil {
@@ -296,7 +296,7 @@ func execSetBit(db *DB, args [][]byte) godis.Reply {
 	bm.SetBit(offset, v)
 	db.PutEntity(key, &database.DataEntity{Data: bm.ToBytes()})
 	db.addAof(utils.ToCmdLine3("setBit", args...))
-	return reply.MakeIntReply(int64(former))
+	return protocol.MakeIntReply(int64(former))
 }
 
 // execGet returns string value bound to the given key
@@ -305,15 +305,15 @@ func execGet(db *DB, args [][]byte) godis.Reply {
 	entity, exists := db.GetEntity(key)
 	if !exists {
 		logger.Info("execGet can't find value for the key: " + key)
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 	// 第二个是判断是否转换成功
 	bytes, ok := entity.Data.([]byte)
 	if !ok {
 		//TODO 类型转化错误
-		return reply.MakeErrReply(" type transfer error")
+		return protocol.MakeErrReply(" type transfer error")
 	}
-	return reply.MakeBulkReply(bytes)
+	return protocol.MakeBulkReply(bytes)
 }
 
 //		execGetEX Get the value of key and optionally set its expiration
@@ -335,54 +335,54 @@ func execGetEX(db *DB, args [][]byte) godis.Reply {
 		return err
 	}
 	if bytes == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 	for i := 1; i < len(args); i++ {
 		arg := strings.ToLower(string(args[i]))
 		if arg == "ex" { // 秒级单位
 			if ttl != unlimitedTTL {
 				//ttl has been set
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			// 参数超标不对了
 			if i+1 >= len(args) {
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			// 拿到ttl的时间
 			ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 			if err != nil {
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			if ttlArg <= 0 {
-				return reply.MakeErrReply("ERR invalid expire time in getex")
+				return protocol.MakeErrReply("ERR invalid expire time in getex")
 			}
 			ttl = ttlArg * 1000
 			i++ // skip next arg
 		} else if arg == "px" { //毫秒单位
 			if ttl != unlimitedTTL {
 				//ttl has been set
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			// 参数超标不对了
 			if i+1 >= len(args) {
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			// 拿到ttl的时间
 			ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 			if err != nil {
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			if ttlArg <= 0 {
-				return reply.MakeErrReply("ERR invalid expire time in getex")
+				return protocol.MakeErrReply("ERR invalid expire time in getex")
 			}
 			ttl = ttlArg
 			i++ // skip next arg
 		} else if arg == "persist" {
 			if ttl != unlimitedTTL { // PERSIST Cannot be used with EX | PX
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			if i+1 > len(args) {
-				return reply.MakeSyntaxErrReply()
+				return protocol.MakeSyntaxErrReply()
 			}
 			db.Persist(key)
 		}
@@ -398,7 +398,7 @@ func execGetEX(db *DB, args [][]byte) godis.Reply {
 			db.addAof(utils.ToCmdLine3("persist", args[0]))
 		}
 	}
-	return reply.MakeBulkReply(bytes)
+	return protocol.MakeBulkReply(bytes)
 }
 
 // execSet sets string value and time to live to the given key
@@ -420,49 +420,49 @@ func execSet(db *DB, args [][]byte) godis.Reply {
 			arg := strings.ToUpper(string(args[i]))
 			if arg == "NX" { //insert
 				if policy == updatePolicy {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				policy = insertPolicy
 			} else if arg == "XX" { // update policy
 				if policy == insertPolicy {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				policy = updatePolicy
 			} else if arg == "EX" { // ttl in seconds
 				if ttl != unlimitedTTL {
 					// ttl has been set
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				if i+1 >= len(args) {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 				if err != nil {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				if ttlArg <= 0 {
-					return reply.MakeErrReply("ERR invalid expire time in set")
+					return protocol.MakeErrReply("ERR invalid expire time in set")
 				}
 				ttl = ttlArg * 1000
 				i++ // skip next arg
 			} else if arg == "PX" {
 				if ttl != unlimitedTTL {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				if i+1 >= len(args) {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 				if err != nil {
-					return reply.MakeSyntaxErrReply()
+					return protocol.MakeSyntaxErrReply()
 				}
 				if ttlArg <= 0 {
-					return reply.MakeErrReply("ERR invalid expire time in set")
+					return protocol.MakeErrReply("ERR invalid expire time in set")
 				}
 				ttl = ttlArg
 				i++ // skip
 			} else {
-				return reply.MakeErrReply("ERR invalid expire time in set")
+				return protocol.MakeErrReply("ERR invalid expire time in set")
 			}
 		}
 	}
@@ -495,9 +495,9 @@ func execSet(db *DB, args [][]byte) godis.Reply {
 		}
 	}
 	if result > 0 {
-		return reply.MakeOkReply()
+		return protocol.MakeOkReply()
 	}
-	return reply.MakeNullBulkReply()
+	return protocol.MakeNullBulkReply()
 }
 
 // execGetDel Get the value of key and delete the key.
@@ -509,13 +509,13 @@ func execGetDel(db *DB, args [][]byte) godis.Reply {
 		return err
 	}
 	if old == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
 	db.Remove(key)
 
 	// We convert to del command to write aof
 	db.addAof(utils.ToCmdLine3("del", args...))
-	return reply.MakeBulkReply(old)
+	return protocol.MakeBulkReply(old)
 }
 
 // execSetNX sets string if not exists
@@ -528,7 +528,7 @@ func execSetNX(db *DB, args [][]byte) godis.Reply {
 	result := db.PutIfAbsent(key, entity)
 	//aof
 	db.addAof(utils.ToCmdLine3("setnx", args...))
-	return reply.MakeIntReply(int64(result))
+	return protocol.MakeIntReply(int64(result))
 }
 
 //	@Description: execSetEX sets string and its ttl
@@ -542,10 +542,10 @@ func execSetEX(db *DB, args [][]byte) godis.Reply {
 	value := args[2]
 	ttlArg, err := strconv.ParseInt(string(args[1]), 10, 64)
 	if err != nil {
-		return reply.MakeSyntaxErrReply()
+		return protocol.MakeSyntaxErrReply()
 	}
 	if ttlArg <= 0 {
-		return reply.MakeErrReply("ERR invalid expire time in setex")
+		return protocol.MakeErrReply("ERR invalid expire time in setex")
 	}
 	ttl := ttlArg * 1000
 	entity := &database.DataEntity{
@@ -557,7 +557,7 @@ func execSetEX(db *DB, args [][]byte) godis.Reply {
 	// aof操作
 	db.addAof(utils.ToCmdLine3("setex", args...))
 	db.addAof(aof.MakeExpireCmd(key, expireTime).Args)
-	return reply.MakeOkReply()
+	return protocol.MakeOkReply()
 }
 
 //	@Description: execGetSet sets value of a string-type key and returns its old value
@@ -580,9 +580,9 @@ func execGetSet(db *DB, args [][]byte) godis.Reply {
 	//aof
 	db.addAof(utils.ToCmdLine3("set", args...))
 	if old == nil {
-		return reply.MakeNullBulkReply()
+		return protocol.MakeNullBulkReply()
 	}
-	return reply.MakeBulkReply(old)
+	return protocol.MakeBulkReply(old)
 }
 
 // execStrLen returns len of string value bound to the given key
@@ -593,9 +593,9 @@ func execStrLen(db *DB, args [][]byte) godis.Reply {
 		return err
 	}
 	if bytes == nil {
-		return reply.MakeIntReply(0)
+		return protocol.MakeIntReply(0)
 	}
-	return reply.MakeIntReply(int64(len(bytes)))
+	return protocol.MakeIntReply(int64(len(bytes)))
 }
 
 // execIncr
@@ -613,18 +613,18 @@ func execIncr(db *DB, args [][]byte) godis.Reply {
 	if bytes != nil {
 		val, err := strconv.ParseInt(string(bytes), 10, 64)
 		if err != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		db.PutEntity(key, &database.DataEntity{
 			Data: []byte(strconv.FormatInt(val+1, 10)),
 		})
-		return reply.MakeIntReply(val + 1)
+		return protocol.MakeIntReply(val + 1)
 	}
 	db.PutEntity(key, &database.DataEntity{
 		Data: []byte("1"),
 	})
 	db.addAof(utils.ToCmdLine3("incr", args...))
-	return reply.MakeIntReply(1)
+	return protocol.MakeIntReply(1)
 }
 
 // execIncrBy
@@ -638,7 +638,7 @@ func execIncrBy(db *DB, args [][]byte) godis.Reply {
 	rawDelta := string(args[1])
 	delta, err := strconv.ParseInt(rawDelta, 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 	bytes, errReply := db.getAsString(key)
 	if errReply != nil {
@@ -648,19 +648,19 @@ func execIncrBy(db *DB, args [][]byte) godis.Reply {
 		// existed value
 		val, err := strconv.ParseInt(string(bytes), 10, 64)
 		if err != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		db.PutEntity(key, &database.DataEntity{
 			Data: []byte(strconv.FormatInt(val+delta, 10)),
 		})
 		db.addAof(utils.ToCmdLine3("incrby", args...))
-		return reply.MakeIntReply(val + delta)
+		return protocol.MakeIntReply(val + delta)
 	}
 	db.PutEntity(key, &database.DataEntity{
 		Data: args[1],
 	})
 	db.addAof(utils.ToCmdLine3("incrby", args...))
-	return reply.MakeIntReply(delta)
+	return protocol.MakeIntReply(delta)
 }
 
 // execIncrByFloat increments the float value of a key by given value
@@ -674,7 +674,7 @@ func execIncrByFloat(db *DB, args [][]byte) godis.Reply {
 	rawDelta := string(args[1])
 	delta, err := decimal.NewFromString(rawDelta)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not a valid float")
+		return protocol.MakeErrReply("ERR value is not a valid float")
 	}
 
 	bytes, errReply := db.getAsString(key)
@@ -684,20 +684,20 @@ func execIncrByFloat(db *DB, args [][]byte) godis.Reply {
 	if bytes != nil {
 		val, err := decimal.NewFromString(string(bytes))
 		if err != nil {
-			return reply.MakeErrReply("ERR value is not a valid float")
+			return protocol.MakeErrReply("ERR value is not a valid float")
 		}
 		resultBytes := []byte(val.Add(delta).String())
 		db.PutEntity(key, &database.DataEntity{
 			Data: resultBytes,
 		})
 		db.addAof(utils.ToCmdLine3("incrbyfloat", args...))
-		return reply.MakeBulkReply(resultBytes)
+		return protocol.MakeBulkReply(resultBytes)
 	}
 	db.PutEntity(key, &database.DataEntity{
 		Data: args[1],
 	})
 	db.addAof(utils.ToCmdLine3("incrbyfloat", args...))
-	return reply.MakeBulkReply(args[1])
+	return protocol.MakeBulkReply(args[1])
 }
 
 // execDecr decrements the integer value of a key by one
@@ -711,20 +711,20 @@ func execDecr(db *DB, args [][]byte) godis.Reply {
 	if bytes != nil {
 		val, err := strconv.ParseInt(string(bytes), 10, 64)
 		if err != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		db.PutEntity(key, &database.DataEntity{
 			Data: []byte(strconv.FormatInt(val-1, 10)),
 		})
 		db.addAof(utils.ToCmdLine3("decr", args...))
-		return reply.MakeIntReply(val - 1)
+		return protocol.MakeIntReply(val - 1)
 	}
 	entity := &database.DataEntity{
 		Data: []byte("-1"),
 	}
 	db.PutEntity(key, entity)
 	db.addAof(utils.ToCmdLine3("decr", args...))
-	return reply.MakeIntReply(-1)
+	return protocol.MakeIntReply(-1)
 }
 
 // execDecrBy decrements the integer value of a key by onedecrement
@@ -733,7 +733,7 @@ func execDecrBy(db *DB, args [][]byte) godis.Reply {
 	rawDelta := string(args[1])
 	delta, err := strconv.ParseInt(rawDelta, 10, 64)
 	if err != nil {
-		return reply.MakeErrReply("ERR value is not an integer or out of range")
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
 	}
 
 	bytes, errReply := db.getAsString(key)
@@ -743,20 +743,20 @@ func execDecrBy(db *DB, args [][]byte) godis.Reply {
 	if bytes != nil {
 		val, err := strconv.ParseInt(string(bytes), 10, 64)
 		if err != nil {
-			return reply.MakeErrReply("ERR value is not an integer or out of range")
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
 		}
 		db.PutEntity(key, &database.DataEntity{
 			Data: []byte(strconv.FormatInt(val-delta, 10)),
 		})
 		db.addAof(utils.ToCmdLine3("decrby", args...))
-		return reply.MakeIntReply(val - delta)
+		return protocol.MakeIntReply(val - delta)
 	}
 	valueStr := strconv.FormatInt(-delta, 10)
 	db.PutEntity(key, &database.DataEntity{
 		Data: []byte(valueStr),
 	})
 	db.addAof(utils.ToCmdLine3("decrby", args...))
-	return reply.MakeIntReply(-delta)
+	return protocol.MakeIntReply(-delta)
 }
 
 // execAppend
@@ -774,5 +774,5 @@ func execAppend(db *DB, args [][]byte) godis.Reply {
 	bytes = append(bytes, args[1]...)
 	db.PutEntity(key, &database.DataEntity{Data: bytes})
 	db.addAof(utils.ToCmdLine3("append", args...))
-	return reply.MakeIntReply(int64(len(bytes)))
+	return protocol.MakeIntReply(int64(len(bytes)))
 }

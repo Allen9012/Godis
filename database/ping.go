@@ -10,7 +10,7 @@
 package database
 
 import (
-	"github.com/Allen9012/Godis/godis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
 )
 
@@ -20,5 +20,5 @@ func init() {
 }
 
 func Ping(db *DB, args [][]byte) godis.Reply {
-	return reply.MakePongReply()
+	return protocol.MakePongReply()
 }

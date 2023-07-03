@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/config/godis"
 	"github.com/Allen9012/Godis/godis/server"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/tcp"
@@ -28,13 +28,13 @@ func main() {
 	//}
 
 	//配置文件方式或者默认方式启动
-	config.Set_godis_config()
+	godis.Set_godis_config()
 
 	// 业务启动
 	err := tcp.ListenAndServeWithSignal(
 		&tcp.Config{
-			Host: config.Properties.Bind,
-			Port: config.Properties.Port,
+			Host: godis.Properties.Bind,
+			Port: godis.Properties.Port,
 		},
 		server.MakeHandler())
 	if err != nil {

@@ -9,7 +9,7 @@ package database
 import (
 	"fmt"
 	"github.com/Allen9012/Godis/aof"
-	"github.com/Allen9012/Godis/config"
+	godis2 "github.com/Allen9012/Godis/config/godis"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
@@ -46,16 +46,16 @@ type StandaloneServer struct {
 //	@return *StandaloneServer
 func NewStandaloneServer() *StandaloneServer {
 	server := &StandaloneServer{}
-	if config.Properties.Databases == 0 {
-		config.Properties.Databases = 16
+	if godis2.Properties.Databases == 0 {
+		godis2.Properties.Databases = 16
 	}
 	// creat tmp dir
-	err := os.MkdirAll(config.GetTmpDir(), os.ModePerm)
+	err := os.MkdirAll(godis2.GetTmpDir(), os.ModePerm)
 	if err != nil {
 		panic(fmt.Errorf("create tmp dir failed: %v", err))
 	}
 	// 初始化数据库
-	server.dbSet = make([]*atomic.Value, config.Properties.Databases)
+	server.dbSet = make([]*atomic.Value, godis2.Properties.Databases)
 	// 赋初始值
 	for i := range server.dbSet {
 		singleDB := makeDB()
@@ -65,9 +65,9 @@ func NewStandaloneServer() *StandaloneServer {
 		server.dbSet[i] = holder
 	}
 	// 查询是否打开配置
-	if config.Properties.AppendOnly {
+	if godis2.Properties.AppendOnly {
 		aofHandler, err := NewPersister(server,
-			config.Properties.AppendFilename, true, config.Properties.AppendFsync)
+			godis2.Properties.AppendFilename, true, godis2.Properties.AppendFsync)
 		if err != nil {
 			panic(err)
 		}

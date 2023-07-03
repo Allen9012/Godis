@@ -10,8 +10,8 @@
 package database
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/redis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/godis"
 )
 
 type EchoDatabase struct {
@@ -21,14 +21,14 @@ func NewEchoDatabase() *EchoDatabase {
 	return &EchoDatabase{}
 }
 
-func (e EchoDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
-	return reply.MakeMultiBulkReply(args)
+func (e EchoDatabase) Exec(client godis.Connection, args [][]byte) godis.Reply {
+	return protocol.MakeMultiBulkReply(args)
 }
 
 func (e EchoDatabase) Close() {
 
 }
 
-func (e EchoDatabase) AfterClientClose(c resp.Connection) {
+func (e EchoDatabase) AfterClientClose(c godis.Connection) {
 
 }

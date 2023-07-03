@@ -13,11 +13,11 @@ import (
 	"context"
 	"github.com/Allen9012/Godis/config"
 	database2 "github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/consistenthash"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/redis/reply"
 	pool "github.com/jolestar/go-commons-pool/v2"
 	"strings"
 )
@@ -27,7 +27,7 @@ type ClusterDatabase struct {
 	nodes          []string                    // node列表
 	peerPicker     *consistenthash.NodeMap     //节点选择器
 	peerconnection map[string]*pool.ObjectPool //map保存连接池 节点地址 ： 池
-	db             database.Database
+	db             database.DB
 }
 
 // MakeClusterDatabase
@@ -40,7 +40,7 @@ type ClusterDatabase struct {
 func MakeClusterDatabase() *ClusterDatabase {
 	cluster := &ClusterDatabase{
 		self:           config.Properties.Self,
-		db:             database2.NewStandaloneDatabase(),
+		db:             database2.NewStandaloneServer(),
 		peerPicker:     consistenthash.NewNodeMap(nil),
 		peerconnection: make(map[string]*pool.ObjectPool),
 	}
@@ -62,21 +62,21 @@ func MakeClusterDatabase() *ClusterDatabase {
 }
 
 // CmdFunc 声明成类型
-type CmdFunc func(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply
+type CmdFunc func(cluster *ClusterDatabase, c godis.Connection, cmdArgs [][]byte) godis.Reply
 
 var router = makeRouter()
 
-func (c *ClusterDatabase) Exec(client resp.Connection, args [][]byte) (result resp.Reply) {
+func (c *ClusterDatabase) Exec(client godis.Connection, args [][]byte) (result godis.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
-			result = reply.UnknowErrReply{}
+			result = protocol.MakeUnknowErrReply()
 		}
 	}()
 	cmdName := strings.ToLower(string(args[0]))
 	cmdFunc, ok := router[cmdName]
 	if !ok {
-		reply.MakeErrReply("not supported cmd")
+		protocol.MakeErrReply("not supported cmd")
 	}
 	result = cmdFunc(c, client, args)
 	return
@@ -86,6 +86,6 @@ func (c *ClusterDatabase) Close() {
 	c.db.Close()
 }
 
-func (c *ClusterDatabase) AfterClientClose(conn resp.Connection) {
+func (c *ClusterDatabase) AfterClientClose(conn godis.Connection) {
 	c.db.AfterClientClose(conn)
 }

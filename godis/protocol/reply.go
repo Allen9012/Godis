@@ -1,8 +1,8 @@
-package reply
+package protocol
 
 import (
 	"bytes"
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/interface/godis"
 	"strconv"
 )
 
@@ -47,7 +47,7 @@ func (r *MultiBulkReply) ToBytes() []byte {
 	buf.WriteString("*" + strconv.Itoa(argLen) + CRLF)
 	for _, arg := range r.Args {
 		if arg == nil {
-			buf.WriteString(string(nullBulkReplyBytes) + CRLF)
+			buf.WriteString("$-1" + CRLF)
 		} else {
 			buf.WriteString("$" + strconv.Itoa(len(arg)) + CRLF + string(arg) + CRLF)
 		}
@@ -57,6 +57,20 @@ func (r *MultiBulkReply) ToBytes() []byte {
 
 func MakeMultiBulkReply(arg [][]byte) *MultiBulkReply {
 	return &MultiBulkReply{Args: arg}
+}
+
+/* ---- Multi Raw Reply ---- */
+
+// MultiRawReply store complex list structure, for example GeoPos command
+type MultiRawReply struct {
+	Replies []godis.Reply
+}
+
+// MakeMultiRawReply creates MultiRawReply
+func MakeMultiRawReply(replies []godis.Reply) *MultiRawReply {
+	return &MultiRawReply{
+		Replies: replies,
+	}
 }
 
 /* ---- Status Reply ---- */
@@ -76,6 +90,11 @@ func MakeStatusReply(status string) *StatusReply {
 // ToBytes marshal redis.Reply
 func (r *StatusReply) ToBytes() []byte {
 	return []byte("+" + r.Status + CRLF)
+}
+
+// IsOKReply returns true if the given protocol is +OK
+func IsOKReply(reply godis.Reply) bool {
+	return string(reply.ToBytes()) == "+OK\r\n"
 }
 
 /* ---- Int Reply ---- */
@@ -127,6 +146,6 @@ func MakeErrReply(status string) *StandardErrReply {
 }
 
 // IsErrorReply returns true if the given reply is error
-func IsErrorReply(reply resp.Reply) bool {
+func IsErrorReply(reply godis.Reply) bool {
 	return reply.ToBytes()[0] == '-'
 }

@@ -10,8 +10,8 @@
 package cluster
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/redis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/godis"
 )
 
 // Rename renames a key, the origin and the destination must within the same node
@@ -22,9 +22,9 @@ import (
 //	 @param args
 //	 @return redis.Reply
 //		rename k1 k2
-func Rename(cluster *ClusterDatabase, c resp.Connection, args [][]byte) resp.Reply {
+func Rename(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
 	if len(args) != 3 {
-		return reply.MakeErrReply("ERR wrong number of arguments for 'rename' command")
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'rename' command")
 	}
 	src := string(args[1])
 	dest := string(args[2])
@@ -33,7 +33,7 @@ func Rename(cluster *ClusterDatabase, c resp.Connection, args [][]byte) resp.Rep
 	destPeer := cluster.peerPicker.PickNode(dest)
 
 	if srcPeer != destPeer {
-		return reply.MakeErrReply("ERR rename must within one slot in cluster mode")
+		return protocol.MakeErrReply("ERR rename must within one slot in cluster mode")
 	}
 	return cluster.relay(srcPeer, c, args)
 }

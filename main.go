@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/godis/server"
 	"github.com/Allen9012/Godis/lib/logger"
-	"github.com/Allen9012/Godis/redis/server"
 	"github.com/Allen9012/Godis/tcp"
 	"os"
 )

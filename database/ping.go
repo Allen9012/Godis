@@ -10,8 +10,8 @@
 package database
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/redis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/godis"
 )
 
 // 初始化把所有的指令存储在cmdTable中
@@ -19,6 +19,6 @@ func init() {
 	RegisterCommand("ping", Ping, 1)
 }
 
-func Ping(db *DB, args [][]byte) resp.Reply {
-	return reply.MakePongReply()
+func Ping(db *DB, args [][]byte) godis.Reply {
+	return protocol.MakePongReply()
 }

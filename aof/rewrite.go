@@ -11,10 +11,10 @@ package aof
 
 import (
 	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/reply"
 	"io"
 	"io/ioutil"
 	"os"
@@ -62,7 +62,7 @@ func (persister *Persister) DoRewrite(ctx *RewriteCtx) error {
 	// rewrite aof tmpFile
 	for i := 0; i < config.Properties.Databases; i++ {
 		// select db
-		data := reply.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(i))).ToBytes()
+		data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(i))).ToBytes()
 		_, err := tmpFile.Write(data)
 		if err != nil {
 			return err
@@ -138,7 +138,7 @@ func (persister *Persister) FinishRewrite(ctx *RewriteCtx) {
 	}
 
 	// sync tmpFile's db index with online aofFile
-	data := reply.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(ctx.dbIdx))).ToBytes()
+	data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(ctx.dbIdx))).ToBytes()
 	_, err = tmpFile.Write(data)
 	if err != nil {
 		logger.Error("tmp file rewrite failed: " + err.Error())
@@ -164,7 +164,7 @@ func (persister *Persister) FinishRewrite(ctx *RewriteCtx) {
 	persister.aofFile = aofFile
 
 	// write select command again to ensure aof file has the same db index with  persister.currentDB
-	data = reply.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(persister.currentDB))).ToBytes()
+	data = protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(persister.currentDB))).ToBytes()
 	_, err = persister.aofFile.Write(data)
 	if err != nil {
 		panic(err)

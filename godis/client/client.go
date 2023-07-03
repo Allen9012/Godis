@@ -1,11 +1,11 @@
 package client
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
+	"github.com/Allen9012/Godis/godis/parser"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/sync/wait"
-	"github.com/Allen9012/Godis/redis/parser"
-	"github.com/Allen9012/Godis/redis/reply"
 	"net"
 	"runtime/debug"
 	"sync"
@@ -27,7 +27,7 @@ type Client struct {
 type request struct {
 	id        uint64
 	args      [][]byte
-	reply     resp.Reply
+	reply     godis.Reply
 	heartbeat bool
 	waiting   *wait.Wait
 	err       error
@@ -116,7 +116,7 @@ func (client *Client) handleWrite() {
 }
 
 // Send sends a request to redis server
-func (client *Client) Send(args [][]byte) resp.Reply {
+func (client *Client) Send(args [][]byte) godis.Reply {
 	request := &request{
 		args:      args,
 		heartbeat: false,
@@ -128,10 +128,10 @@ func (client *Client) Send(args [][]byte) resp.Reply {
 	client.pendingReqs <- request
 	timeout := request.waiting.WaitWithTimeout(maxWait)
 	if timeout {
-		return reply.MakeErrReply("server time out")
+		return protocol.MakeErrReply("server time out")
 	}
 	if request.err != nil {
-		return reply.MakeErrReply("request failed")
+		return protocol.MakeErrReply("request failed")
 	}
 	return request.reply
 }
@@ -153,7 +153,7 @@ func (client *Client) doRequest(req *request) {
 	if req == nil || len(req.args) == 0 {
 		return
 	}
-	re := reply.MakeMultiBulkReply(req.args)
+	re := protocol.MakeMultiBulkReply(req.args)
 	bytes := re.ToBytes()
 	_, err := client.conn.Write(bytes)
 	i := 0
@@ -172,7 +172,7 @@ func (client *Client) doRequest(req *request) {
 	}
 }
 
-func (client *Client) finishRequest(reply resp.Reply) {
+func (client *Client) finishRequest(reply godis.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
 			debug.PrintStack()
@@ -193,7 +193,7 @@ func (client *Client) handleRead() error {
 	ch := parser.ParseStream(client.conn)
 	for payload := range ch {
 		if payload.Err != nil {
-			client.finishRequest(reply.MakeErrReply(payload.Err.Error()))
+			client.finishRequest(protocol.MakeErrReply(payload.Err.Error()))
 			continue
 		}
 		client.finishRequest(payload.Data)

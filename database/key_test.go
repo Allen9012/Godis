@@ -11,9 +11,9 @@ package database
 
 import (
 	"fmt"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/godis/protocol/asserts"
 	"github.com/Allen9012/Godis/lib/utils"
-	"github.com/Allen9012/Godis/redis/protocol/asserts"
-	"github.com/Allen9012/Godis/redis/reply"
 	"strconv"
 	"testing"
 	"time"
@@ -69,7 +69,7 @@ func TestRename(t *testing.T) {
 	newKey := key + utils.RandString(2)
 	testDB.Exec(nil, utils.ToCmdLine("set", key, value, "ex", "1000"))
 	result := testDB.Exec(nil, utils.ToCmdLine("rename", key, newKey))
-	if _, ok := result.(*reply.OkReply); !ok {
+	if _, ok := result.(*protocol.OkReply); !ok {
 		t.Error("expect ok")
 		return
 	}
@@ -79,7 +79,7 @@ func TestRename(t *testing.T) {
 	asserts.AssertIntReply(t, result, 1)
 	// check ttl
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", newKey))
-	intResult, ok := result.(*reply.IntReply)
+	intResult, ok := result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -103,7 +103,7 @@ func TestRenameNx(t *testing.T) {
 	result = testDB.Exec(nil, utils.ToCmdLine("exists", newKey))
 	asserts.AssertIntReply(t, result, 1)
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", newKey))
-	intResult, ok := result.(*reply.IntReply)
+	intResult, ok := result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -123,7 +123,7 @@ func TestTTL(t *testing.T) {
 	result := testDB.Exec(nil, utils.ToCmdLine("expire", key, "1000"))
 	asserts.AssertIntReply(t, result, 1)
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", key))
-	intResult, ok := result.(*reply.IntReply)
+	intResult, ok := result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -141,7 +141,7 @@ func TestTTL(t *testing.T) {
 	result = testDB.Exec(nil, utils.ToCmdLine("PExpire", key, "1000000"))
 	asserts.AssertIntReply(t, result, 1)
 	result = testDB.Exec(nil, utils.ToCmdLine("PTTL", key))
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -174,7 +174,7 @@ func TestExpireAt(t *testing.T) {
 
 	asserts.AssertIntReply(t, result, 1)
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", key))
-	intResult, ok := result.(*reply.IntReply)
+	intResult, ok := result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -188,7 +188,7 @@ func TestExpireAt(t *testing.T) {
 	result = testDB.Exec(nil, utils.ToCmdLine("PExpireAt", key, strconv.FormatInt(expireAt*1000, 10)))
 	asserts.AssertIntReply(t, result, 1)
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", key))
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -216,7 +216,7 @@ func TestExpiredTime(t *testing.T) {
 	testDB.Exec(nil, utils.ToCmdLine("EXPIRE", key, "2"))
 	//tt := time.Now()
 	result = testDB.Exec(nil, utils.ToCmdLine("ttl", key))
-	intResult, ok := result.(*reply.IntReply)
+	intResult, ok := result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -227,7 +227,7 @@ func TestExpiredTime(t *testing.T) {
 	}
 	result = testDB.Exec(nil, utils.ToCmdLine("EXPIRETIME", key))
 	asserts.AssertIntReply(t, result, int(time.Now().Add(2*time.Second).Unix()))
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -239,7 +239,7 @@ func TestExpiredTime(t *testing.T) {
 
 	result = testDB.Exec(nil, utils.ToCmdLine("PEXPIRETIME", key))
 	asserts.AssertIntReply(t, result, int(time.Now().Add(2*time.Second).UnixMilli()))
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 	if !ok {
 		t.Error(fmt.Sprintf("expected int protocol, actually %s", result.ToBytes()))
 		return
@@ -254,10 +254,10 @@ func TestExpiredTime(t *testing.T) {
 	asserts.AssertIntReply(t, result, -2)
 	result = testDB.Exec(nil, utils.ToCmdLine("EXPIRETIME", key))
 	asserts.AssertIntReply(t, result, -2)
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 	result = testDB.Exec(nil, utils.ToCmdLine("PEXPIRETIME", key))
 	asserts.AssertIntReply(t, result, -2)
-	intResult, ok = result.(*reply.IntReply)
+	intResult, ok = result.(*protocol.IntReply)
 
 }
 
@@ -279,7 +279,7 @@ func TestKeys(t *testing.T) {
 
 //func TestCopy(t *testing.T) {
 //	testDB.Flush()
-//	testMDB := NewStandaloneDatabase()
+//	testMDB := NewStandaloneServer()
 //	srcKey := utils.RandString(10)
 //	destKey := "from:" + srcKey
 //	value := utils.RandString(10)

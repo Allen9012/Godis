@@ -10,8 +10,8 @@
 package cluster
 
 import (
-	"github.com/Allen9012/Godis/interface/resp"
-	"github.com/Allen9012/Godis/redis/reply"
+	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/godis"
 )
 
 // Del atomically removes given writeKeys from cluster, writeKeys can be distributed on any node
@@ -22,24 +22,24 @@ import (
 //	@param c
 //	@param args
 //	@return redis.Reply
-func Del(cluster *ClusterDatabase, c resp.Connection, args [][]byte) resp.Reply {
+func Del(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
 	replies := cluster.broadcast(c, args)
-	var errReply reply.ErrorReply
+	var errReply protocol.ErrorReply
 	var deleted int64 = 0
 	for _, v := range replies {
-		if reply.IsErrorReply(v) {
-			errReply = v.(reply.ErrorReply)
+		if protocol.IsErrorReply(v) {
+			errReply = v.(protocol.ErrorReply)
 			break
 		}
-		intReply, ok := v.(*reply.IntReply)
+		intReply, ok := v.(*protocol.IntReply)
 		if !ok {
-			errReply = reply.MakeErrReply("error")
+			errReply = protocol.MakeErrReply("error")
 		}
 		deleted += intReply.Code
 	}
 
 	if errReply == nil {
-		return reply.MakeIntReply(deleted)
+		return protocol.MakeIntReply(deleted)
 	}
-	return reply.MakeErrReply("error occurs: " + errReply.Error())
+	return protocol.MakeErrReply("error occurs: " + errReply.Error())
 }

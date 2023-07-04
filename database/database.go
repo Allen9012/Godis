@@ -78,6 +78,7 @@ func makeBasicDB() *DB {
 }
 
 // Exec executes command within one database
+//
 //	TODO 优化Exec方法
 //	@Description:
 //	@receiver db*
@@ -100,7 +101,7 @@ func (db *DB) Exec(connection godis.Connection, cmdLine CmdLine) godis.Reply {
 }
 
 // TODO 优化实现prepare
-//func (db *DB) execNormalCommand(cmdLine [][]byte) godis.Reply {
+// func (db *DB) execNormalCommand(cmdLine [][]byte) godis.Reply {
 //	cmdName := strings.ToLower(string(cmdLine[0]))
 //	cmd, ok := cmdTable[cmdName]
 //	if !ok {

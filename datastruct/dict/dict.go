@@ -1,9 +1,10 @@
+package dict
+
 /**
   @author: Allen
   @since: 2023/2/25
-  @desc: //TODO
+  @desc: dict结构
 **/
-package dict
 
 // Consumer 遍历的方法
 type Consumer func(key string, val interface{}) bool

@@ -1,3 +1,8 @@
+## 7/4 优化
+优化了随机数种子的失效问题,
+> 由于使用了`var r = rand.New(rand.NewSource(time.Now().UnixNano()))` 所以说如果rand.NewSource 函数用于创建一个新的伪随机数生成器种子。而 rand.Seed 函数用于初始化默认的伪随机数生成器种子。在每次调用 rand.Intn 之前，如果没有调用 rand.Seed 函数设置种子，将会使用默认的种子，导致生成的随机数序列相同，导致seed一样，导致字符串是一样的，解决方法是吧局部变量编程全局变量，避免在函数调用的时候生成相同的种子，提高随机性
+rand.NewSource(time.Now().UnixNano()) 移到函数外部作为全局变量，并在程序启动时使用 rand.Seed 函数设置种子。这样可以避免在每次函数调用时生成相同的种子。
+优化增加了set的测试代码
 ## 7/2 优化
 + 优化standalone_server 执行方法 
 + 客户端conn， 优化使用sync.Pool缓冲池 

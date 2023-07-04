@@ -1,14 +1,10 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/3/5
-	@desc: //TODO
-
-*
-*/
 package timewheel
 
+/*
+	@author: Allen
+	@since: 2023/3/5
+	@desc: 时间库
+*/
 import (
 	"container/list"
 	"github.com/Allen9012/Godis/lib/logger"

@@ -1,9 +1,10 @@
-/**
-  @author: Allen
-  @since: 2023/4/12
-  @desc: //TODO
-**/
 package dict
+
+/*
+@author: Allen
+@since: 2023/4/12
+@desc: SimpleDict是一个不支持并发的字典
+*/
 
 type SimpleDict struct {
 	m map[string]interface{}

@@ -10,7 +10,7 @@
 package aof
 
 import (
-	"github.com/Allen9012/Godis/config"
+	"github.com/Allen9012/Godis/config/godis"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
@@ -60,7 +60,7 @@ func (persister *Persister) DoRewrite(ctx *RewriteCtx) error {
 	tmpAof.LoadAof(int(ctx.fileSize))
 
 	// rewrite aof tmpFile
-	for i := 0; i < config.Properties.Databases; i++ {
+	for i := 0; i < godis.Properties.Databases; i++ {
 		// select db
 		data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(i))).ToBytes()
 		_, err := tmpFile.Write(data)

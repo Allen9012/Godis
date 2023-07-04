@@ -1,7 +1,8 @@
-package config
+package godis
 
 import (
 	"bufio"
+	"flag"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
 	"io"
@@ -90,6 +91,23 @@ func init() {
 		AppendOnly: false,
 		RunID:      utils.RandString(40),
 	}
+	// init flag
+	flagInit()
+}
+
+/* --- 			flag 启动参数提示				---*/
+func flagInit() {
+	flag.StringVar(&(Properties.AppendFilename), "config", Properties.AppendFilename, "Appoint a config file: such as redis.conf")
+	flag.StringVar(&(Properties.Bind), "bind", Properties.Bind, "Bind host ip: default is 127.0.0.1")
+	flag.IntVar(&(Properties.Port), "port", Properties.Port, "Bind a listening port: default is 9012")
+	flag.IntVar(&(Properties.MaxClients), "maxClients", Properties.MaxClients, "set the buffer size of channels in PUB/SUB commands. ")
+	flag.IntVar(&(Properties.Databases), "Databases", Properties.Databases, "set the number of databases")
+	flag.StringVar(&Properties.ClusterConfigFile, "clusterConfigPath", Properties.ClusterConfigFile, "config file path to start cluster mode")
+	flag.BoolVar(&Properties.ClusterEnable, "clusterEnable", false, "flag indicates running in cluster mode")
+	flag.StringVar(&Properties.Self, "self", "127.0.0.1:9012", "define the address of the current node")
+	flag.BoolVar(&Properties.AppendOnly, "appendOnly", true, "flag indicates running in appendOnly mode")
+	flag.StringVar(&Properties.AppendFilename, "appendFilename", "appendonly.aof", "define the name of the appendOnly file")
+	flag.StringVar(&Properties.AppendFsync, "appendfsync", "everysec", "set the fsync policy for AOF")
 }
 
 func fileExists(filename string) bool {
@@ -103,6 +121,7 @@ func Set_godis_config() {
 	} else {
 		Properties = defaultProperties
 	}
+
 }
 
 // SetupConfig read config file and store properties into Properties
@@ -128,6 +147,8 @@ func SetupConfig(configFilename string) {
 	if Properties.Dir == "" {
 		Properties.Dir = "."
 	}
+	// parse command line flags 命令行配置优先级高
+	flag.Parse()
 }
 
 // parse config file

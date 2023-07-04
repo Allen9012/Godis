@@ -11,7 +11,7 @@ package cluster
 
 import (
 	"context"
-	"github.com/Allen9012/Godis/config"
+	godis2 "github.com/Allen9012/Godis/config/godis"
 	database2 "github.com/Allen9012/Godis/database"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
@@ -39,20 +39,20 @@ type ClusterDatabase struct {
 //	 3. 建立连接池
 func MakeClusterDatabase() *ClusterDatabase {
 	cluster := &ClusterDatabase{
-		self:           config.Properties.Self,
+		self:           godis2.Properties.Self,
 		db:             database2.NewStandaloneServer(),
 		peerPicker:     consistenthash.NewNodeMap(nil),
 		peerconnection: make(map[string]*pool.ObjectPool),
 	}
-	nodes := make([]string, len(config.Properties.Peers)+1)
-	for _, peer := range config.Properties.Peers {
+	nodes := make([]string, len(godis2.Properties.Peers)+1)
+	for _, peer := range godis2.Properties.Peers {
 		nodes = append(nodes, peer)
 	}
-	nodes = append(nodes, config.Properties.Self)
+	nodes = append(nodes, godis2.Properties.Self)
 	cluster.peerPicker.AddNode(nodes...)
 	ctx := context.Background()
 	// 新建连接池
-	for _, peer := range config.Properties.Peers {
+	for _, peer := range godis2.Properties.Peers {
 		cluster.peerconnection[peer] = pool.NewObjectPoolWithDefaultConfig(ctx, connectionFactory{
 			Peer: peer,
 		})

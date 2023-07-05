@@ -1,10 +1,10 @@
+package list
+
 /**
   @author: Allen
   @since: 2023/3/12
-  @desc: //quicklist
+  @desc: quickList
 **/
-package list
-
 import "container/list"
 
 // pageSize must be even
@@ -33,22 +33,20 @@ func NewQuickList() *QuickList {
 
 /*--- iterator ---*/
 
-//
 // get
-//  @Description: 拿到value
-//  @receiver iter
-//  @return interface{}
 //
+//	@Description: 拿到value
+//	@receiver iter
+//	@return interface{}
 func (iter *iterator) get() interface{} {
 	return iter.page()[iter.offset]
 }
 
-//
 // page
-//  @Description: 拿到page
-//  @receiver iter
-//  @return []interface{}
 //
+//	@Description: 拿到page
+//	@receiver iter
+//	@return []interface{}
 func (iter *iterator) page() []interface{} {
 	return iter.node.Value.([]interface{})
 }
@@ -132,16 +130,16 @@ func (ql *QuickList) Add(val interface{}) {
 	}
 	// assert list.data.Back() != nil
 	backNode := ql.data.Back()
-	backPage := backNode.Value.([]interface{})
-	if len(backPage) == cap(backPage) { // full page, create new page
+	oldPage := backNode.Value.([]interface{})
+	if len(oldPage) == cap(oldPage) { // full page, create new page
 		page := make([]interface{}, 0, pageSize)
 		page = append(page, val)
 		ql.data.PushBack(page)
 		return
 	}
-	// 直接插入
-	backPage = append(backPage, val)
-	backNode.Value = backPage
+	// 直接插入和更新
+	oldPage = append(oldPage, val)
+	backNode.Value = oldPage
 }
 
 // find returns page and in-page-offset of given index
@@ -240,13 +238,12 @@ func (ql *QuickList) Set(index int, val interface{}) {
 	iter.set(val)
 }
 
-//
 // Insert
-//  @Description: 在QuickList中插入到任意位置
-//  @receiver ql
-//  @param index
-//  @param val
 //
+//	@Description: 在QuickList中插入到任意位置
+//	@receiver ql
+//	@param index
+//	@param val
 func (ql *QuickList) Insert(index int, val interface{}) {
 	// 1. 如果插入在末尾就直接Add
 	// 2. 找到index迭代器的位置，拿到下标页page
@@ -319,14 +316,14 @@ func (ql *QuickList) RemoveLast() interface{} {
 	return val
 }
 
-//
 // RemoveAllByVal removes all elements with the given val
-//  @Description:
-//  @receiver ql
-//  @param expected
-//  @return int
-//	1. 获取第一个节点
-//  2. 遍历找到就++，然后删除
+//
+//	 @Description:
+//	 @receiver ql
+//	 @param expected
+//	 @return int
+//		1. 获取第一个节点
+//	 2. 遍历找到就++，然后删除
 func (ql *QuickList) RemoveAllByVal(expected Expected) int {
 	if ql.size == 0 {
 		return 0
@@ -344,15 +341,14 @@ func (ql *QuickList) RemoveAllByVal(expected Expected) int {
 	return removed
 }
 
-//
 // RemoveByVal removes at most `count` values of the specified value in this list
 // scan from left to right
-//  @Description:
-//  @receiver ql
-//  @param expected
-//  @param count
-//  @return int
 //
+//	@Description:
+//	@receiver ql
+//	@param expected
+//	@param count
+//	@return int
 func (ql *QuickList) RemoveByVal(expected Expected, count int) int {
 	if ql.size == 0 {
 		return 0

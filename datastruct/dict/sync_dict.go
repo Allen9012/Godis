@@ -1,10 +1,10 @@
+package dict
+
 /**
   @author: Allen
   @since: 2023/2/25
   @desc: // 系统最底层的保存数据的接口
 **/
-package dict
-
 import "sync"
 
 // SyncDict wraps a map, it is not thread safe

@@ -1,9 +1,10 @@
-/**
-  @author: Allen
-  @since: 2023/3/7
-  @desc: //位图
-**/
 package bitmap
+
+/*
+	@author: Allen
+	@since: 2023/3/7
+	@desc: //位图
+*/
 
 type BitMap []byte
 
@@ -12,12 +13,13 @@ func New() *BitMap {
 	return &b
 }
 
-//
 // toByteSize
-//  @Description: 有几个字节
-// @param bitSize
-//  @return int64
 //
+//	@Description: 有几个字节
+//
+// @param bitSize
+//
+//	@return int64
 func toByteSize(bitSize int64) int64 {
 	if bitSize%8 == 0 {
 		return bitSize / 8
@@ -25,12 +27,11 @@ func toByteSize(bitSize int64) int64 {
 	return bitSize/8 + 1
 }
 
-//
 // grow
-//  @Description: 扩容
-//  @receiver b
-//  @param bitSize
 //
+//	@Description: 扩容
+//	@receiver b
+//	@param bitSize
 func (b *BitMap) grow(bitSize int64) {
 	// 希望扩容到的字节数
 	byteSize := toByteSize(bitSize)
@@ -41,22 +42,20 @@ func (b *BitMap) grow(bitSize int64) {
 	*b = append(*b, make([]byte, gap)...)
 }
 
-//
 // BitSize
-//  @Description: 多大bit
-//  @receiver b
-//  @return int
 //
+//	@Description: 多大bit
+//	@receiver b
+//	@return int
 func (b *BitMap) BitSize() int {
 	return len(*b) * 8
 }
 
-//
 // FromBytes
-//  @Description: byte转化bm
-//  @param bytes
-//  @return *BitMap
 //
+//	@Description: byte转化bm
+//	@param bytes
+//	@return *BitMap
 func FromBytes(bytes []byte) *BitMap {
 	bm := BitMap(bytes)
 	return &bm
@@ -93,14 +92,13 @@ func (b *BitMap) GetBit(offset int64) byte {
 
 type Callback func(offset int64, val byte) bool
 
-//
 // ForEachBit
-//  @Description: 遍历操作每个bit
-//  @receiver b
-//  @param begin
-//  @param end
-//  @param cb
 //
+//	@Description: 遍历操作每个bit
+//	@receiver b
+//	@param begin
+//	@param end
+//	@param cb
 func (b *BitMap) ForEachBit(begin int64, end int64, cb Callback) {
 	offset := begin
 	byteIndex := offset / 8
@@ -126,14 +124,13 @@ func (b *BitMap) ForEachBit(begin int64, end int64, cb Callback) {
 	}
 }
 
-//
 // ForEachByte
-//  @Description: 遍历字节
-//  @receiver b
-//  @param begin
-//  @param end
-//  @param cb
 //
+//	@Description: 遍历字节
+//	@receiver b
+//	@param begin
+//	@param end
+//	@param cb
 func (b *BitMap) ForEachByte(begin int, end int, cb Callback) {
 	if end == 0 {
 		end = len(*b)

@@ -133,6 +133,7 @@ func Setup() (*Config, error) {
 			return nil, err
 		}
 	}
+
 	//声明一个全局的方便调用
 	Configures = cfg
 	return cfg, nil

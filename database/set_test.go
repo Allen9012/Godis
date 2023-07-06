@@ -128,15 +128,26 @@ func TestSInter(t *testing.T) {
 	key1 := utils.RandString(10)
 	testDB.Exec(nil, utils.ToCmdLine("sadd", key1, "a", "b"))
 	key2 := utils.RandString(10)
-	testDB.Exec(nil, utils.ToCmdLine("sadd", key1, "1", "2"))
+	testDB.Exec(nil, utils.ToCmdLine("sadd", key2, "1", "2"))
 	result = testDB.Exec(nil, utils.ToCmdLine("sinter", key0, key1, key2))
 	asserts.AssertMultiBulkReplySize(t, result, 0)
 	result = testDB.Exec(nil, utils.ToCmdLine("sinter", key1, key2))
 	asserts.AssertMultiBulkReplySize(t, result, 0)
-
+	// intersact and store
 	result = testDB.Exec(nil, utils.ToCmdLine("sinterstore", utils.RandString(10), key0, key1, key2))
 	asserts.AssertIntReply(t, result, 0)
 	result = testDB.Exec(nil, utils.ToCmdLine("sinterstore", utils.RandString(10), key1, key2))
 	asserts.AssertIntReply(t, result, 0)
+}
+
+func TestSUnion(t *testing.T) {
+
+}
+
+func TestSDiff(t *testing.T) {
+
+}
+
+func TestSRandMember(t *testing.T) {
 
 }

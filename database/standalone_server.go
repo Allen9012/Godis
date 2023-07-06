@@ -31,6 +31,7 @@ type StandaloneServer struct {
 	//// TODO handle publish/subscribe
 	//hub *pubsub.Hub
 	//// TODO for replication
+
 	//role         int32
 	//slaveStatus  *slaveStatus
 	//masterStatus *masterStatus

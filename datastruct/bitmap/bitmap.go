@@ -3,7 +3,7 @@ package bitmap
 /*
 	@author: Allen
 	@since: 2023/3/7
-	@desc: //位图
+	@desc: 位图
 */
 
 type BitMap []byte

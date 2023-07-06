@@ -1,14 +1,10 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/3/13
-	@desc: //TODO
-
-*
-*/
 package database
 
+/*
+	@author: Allen
+	@since: 2023/3/13
+	@desc: list
+*/
 import (
 	"fmt"
 	"github.com/Allen9012/Godis/godis/protocol"

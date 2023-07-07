@@ -64,7 +64,7 @@ func (db *DB) getOrInitSet(key string) (set *HashSet.Set, inited bool, errReply 
 //	@Description: SRANDMEMBER key [count]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSRandMember(db *DB, args [][]byte) godis.Reply {
 	if len(args) != 1 && len(args) != 2 {
 		return protocol.MakeErrReply("ERR wrong number of arguments for 'srandmember' command")
@@ -112,7 +112,7 @@ func execSRandMember(db *DB, args [][]byte) godis.Reply {
 //	@Description: SDIFFSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSDiffStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -167,7 +167,7 @@ func execSDiffStore(db *DB, args [][]byte) godis.Reply {
 //	@Description: SDIFF key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSDiff(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -218,7 +218,7 @@ func execSDiff(db *DB, args [][]byte) godis.Reply {
 //	@Description: SUNIONSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSUnionStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -265,7 +265,7 @@ func execSUnionStore(db *DB, args [][]byte) godis.Reply {
 //	@Description: SUNION key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSUnion(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -309,7 +309,7 @@ func execSUnion(db *DB, args [][]byte) godis.Reply {
 //	@Description: SINTERSTORE destination key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSInterStore(db *DB, args [][]byte) godis.Reply {
 	dest := string(args[0])
 	keys := make([]string, len(args)-1)
@@ -354,7 +354,7 @@ func execSInterStore(db *DB, args [][]byte) godis.Reply {
 //	@Description: SINTER key [key ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSInter(db *DB, args [][]byte) godis.Reply {
 	keys := make([]string, len(args))
 	for i, arg := range args {
@@ -404,7 +404,7 @@ func execSInter(db *DB, args [][]byte) godis.Reply {
 //	@Description: SMEMBERS key
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSMembers(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	set, errReply := db.getAsSet(key)
@@ -430,7 +430,7 @@ func execSMembers(db *DB, args [][]byte) godis.Reply {
 //	@Description: SCARD key
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSCard(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	// get or init entity
@@ -449,7 +449,7 @@ func execSCard(db *DB, args [][]byte) godis.Reply {
 //	@Description: SPOP key [count]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 //	删除返回result
 func execSPop(db *DB, args [][]byte) godis.Reply {
 	if len(args) != 1 && len(args) != 2 {
@@ -493,7 +493,7 @@ func execSPop(db *DB, args [][]byte) godis.Reply {
 //	@Description: SREM key member [member ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSRem(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	members := args[1:]
@@ -526,7 +526,7 @@ func execSRem(db *DB, args [][]byte) godis.Reply {
 //	@Description: SISMEMBER key member
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSIsMember(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	member := string(args[1])
@@ -552,7 +552,7 @@ func execSIsMember(db *DB, args [][]byte) godis.Reply {
 //	@Description: SADD key member [member ...]
 //	@param db
 //	@param args
-//	@return redis.Reply
+//	@return godis.Reply
 func execSAdd(db *DB, args [][]byte) godis.Reply {
 	key := string(args[0])
 	members := args[1:]

@@ -103,10 +103,11 @@ func TestSInter(t *testing.T) {
 	testDB.Flush()
 	size := 100
 	step := 10
+	setNum := 4
 	keys := make([]string, 0)
 	start := 0
 	// 制造每个大小为100 的4个集合, 用step使之重和
-	for i := 0; i < 4; i++ {
+	for i := 0; i < setNum; i++ {
 		key := utils.RandString(10) + strconv.Itoa(i)
 		keys = append(keys, key)
 		// 模拟插入size大小的数据
@@ -117,7 +118,7 @@ func TestSInter(t *testing.T) {
 		start += step
 	}
 	result := testDB.Exec(nil, utils.ToCmdLine2("sinter", keys...))
-	asserts.AssertMultiBulkReplySize(t, result, size-step*3)
+	asserts.AssertMultiBulkReplySize(t, result, size-step*(setNum-1))
 
 	// test empty set
 	testDB.Flush()
@@ -141,13 +142,115 @@ func TestSInter(t *testing.T) {
 }
 
 func TestSUnion(t *testing.T) {
-
+	testDB.Flush()
+	size := 100
+	step := 10
+	setNum := 4
+	keys := make([]string, 0)
+	start := 0
+	// 制造每个大小为100 的4个集合, 用step使之重和
+	for i := 0; i < setNum; i++ {
+		key := utils.RandString(10) + strconv.Itoa(i)
+		keys = append(keys, key)
+		// 模拟插入size大小的数据
+		for j := start; j < start+size; j++ {
+			member := strconv.Itoa(j)
+			testDB.Exec(nil, utils.ToCmdLine("sadd", key, member))
+		}
+		start += step
+	}
+	result := testDB.Exec(nil, utils.ToCmdLine2("sunion", keys...))
+	asserts.AssertMultiBulkReplySize(t, result, size+step*(setNum-1))
+	// 通过Union使得destination 放在keysWithDest[0],并且返回值是全集
+	destKey := utils.RandString(10)
+	keysWithDest := []string{destKey}
+	keysWithDest = append(keysWithDest, keys...)
+	result = testDB.Exec(nil, utils.ToCmdLine2("sunionstore", keysWithDest...))
+	asserts.AssertIntReply(t, result, size+step*(setNum-1))
 }
 
 func TestSDiff(t *testing.T) {
+	testDB.Flush()
+	size := 100
+	step := 20
+	setNum := 3
+	keys := make([]string, 0)
+	start := 0
+	// 制造每个大小为100 的4个集合, 用step使之重和
+	for i := 0; i < setNum; i++ {
+		key := utils.RandString(10)
+		keys = append(keys, key)
+		// 模拟插入size大小的数据
+		for j := start; j < start+size; j++ {
+			member := strconv.Itoa(j)
+			testDB.Exec(nil, utils.ToCmdLine("sadd", key, member))
+		}
+		start += step
+	}
 
+	result := testDB.Exec(nil, utils.ToCmdLine2("sdiff", keys...))
+	asserts.AssertMultiBulkReplySize(t, result, step)
+
+	destKey := utils.RandString(10)
+	keysWithDest := []string{destKey}
+	keysWithDest = append(keysWithDest, keys...)
+	result = testDB.Exec(nil, utils.ToCmdLine2("SDiffStore", keysWithDest...))
+	asserts.AssertIntReply(t, result, step)
+
+	// test empty set
+	testDB.Flush()
+	key0 := utils.RandString(10)
+	testDB.Remove(key0)
+	key1 := utils.RandString(10)
+	testDB.Exec(nil, utils.ToCmdLine("sadd", key1, "a", "b"))
+	key2 := utils.RandString(10)
+	testDB.Exec(nil, utils.ToCmdLine("sadd", key2, "a", "b"))
+	result = testDB.Exec(nil, utils.ToCmdLine("sdiff", key0, key1, key2))
+	asserts.AssertMultiBulkReplySize(t, result, 0)
+	result = testDB.Exec(nil, utils.ToCmdLine("sdiff", key1, key2))
+	asserts.AssertMultiBulkReplySize(t, result, 0)
+	result = testDB.Exec(nil, utils.ToCmdLine("SDiffStore", utils.RandString(10), key0, key1, key2))
+	asserts.AssertIntReply(t, result, 0)
+	result = testDB.Exec(nil, utils.ToCmdLine("SDiffStore", utils.RandString(10), key1, key2))
+	asserts.AssertIntReply(t, result, 0)
 }
 
 func TestSRandMember(t *testing.T) {
+	testDB.Flush()
+	key := utils.RandString(10)
+	for j := 0; j < 100; j++ {
+		member := strconv.Itoa(j)
+		testDB.Exec(nil, utils.ToCmdLine("sadd", key, member))
+	}
+	result := testDB.Exec(nil, utils.ToCmdLine("SRandMember", key))
+	br, ok := result.(*protocol.BulkReply)
+	if !ok && len(br.Arg) > 0 {
+		t.Error(fmt.Sprintf("expected bulk protocol, actually %s", result.ToBytes()))
+		return
+	}
 
+	result = testDB.Exec(nil, utils.ToCmdLine("SRandMember", key, "10"))
+	asserts.AssertMultiBulkReplySize(t, result, 10)
+	multiBulk, ok := result.(*protocol.MultiBulkReply)
+	if !ok {
+		t.Error(fmt.Sprintf("expected bulk protocol, actually %s", result.ToBytes()))
+		return
+	}
+	m := make(map[string]struct{})
+	for _, arg := range multiBulk.Args {
+		m[string(arg)] = struct{}{}
+	}
+	if len(m) != 10 {
+		t.Error(fmt.Sprintf("expected 10 members, actually %d", len(m)))
+		return
+	}
+
+	result = testDB.Exec(nil, utils.ToCmdLine("SRandMember", key, "110"))
+	asserts.AssertMultiBulkReplySize(t, result, 100)
+
+	result = testDB.Exec(nil, utils.ToCmdLine("SRandMember", key, "-10"))
+	asserts.AssertMultiBulkReplySize(t, result, 10)
+
+	result = testDB.Exec(nil, utils.ToCmdLine("SRandMember", key, "-110"))
+	asserts.AssertMultiBulkReplySize(t, result, 110)
 }

@@ -66,6 +66,33 @@ func random_level() int16 {
 }
 
 /* -----	RETRIEVE	-----*/
+//
+// getRank
+//  @Description: 1 based rank, 0 means member not found
+//  @receiver skiplist
+//  @param member
+//  @param score
+//  @return int64
+//
+func (skiplist *skiplist) get_rank(member string, score float64) int64 {
+	var rank int64 = 0
+	x := skiplist.header
+	for i := skiplist.level - 1; i >= 0; i-- {
+		for x.level[i].next != nil &&
+			(x.level[i].next.Score < score ||
+				(x.level[i].next.Score == score &&
+					x.level[i].next.Member <= member)) {
+			rank += x.level[i].span
+			x = x.level[i].next
+		}
+
+		/* x might be equal to zsl->header, so test if obj is non-NULL */
+		if x.Member == member {
+			return rank
+		}
+	}
+	return 0
+}
 
 //
 // get_by_rank
@@ -258,7 +285,7 @@ func (skiplist *skiplist) insert(member string, score float64) *node {
 //  @param score
 //  @return bool
 //
-func (skiplist *skiplist) Remove(member string, score float64) bool {
+func (skiplist *skiplist) remove(member string, score float64) bool {
 	/*
 	 * find backward node (of target) or last node of each level
 	 * their forward need to be updated
@@ -314,7 +341,7 @@ func (skiplist *skiplist) remove_node(node *node, update []*node) {
 }
 
 //
-// RemoveRange
+// remove_range
 //  @Description: return removed elements
 //  @receiver skiplist
 //  @param min
@@ -322,7 +349,7 @@ func (skiplist *skiplist) remove_node(node *node, update []*node) {
 //  @param limit
 //  @return removed
 //
-func (skiplist *skiplist) RemoveRange(min Border, max Border, limit int) (removed []*Element) {
+func (skiplist *skiplist) remove_range(min Border, max Border, limit int) (removed []*Element) {
 	update := make([]*node, maxLevel)
 	removed = make([]*Element, 0)
 	// find backward nodes (of target range) or last node of each level
@@ -365,7 +392,7 @@ func (skiplist *skiplist) RemoveRange(min Border, max Border, limit int) (remove
 //  @param stop
 //  @return removed
 //
-func (skiplist *skiplist) RemoveRangeByRank(start int64, stop int64) (removed []*Element) {
+func (skiplist *skiplist) remove_range_by_rank(start int64, stop int64) (removed []*Element) {
 	var i int64 = 0 // rank of iterator
 	update := make([]*node, maxLevel)
 	removed = make([]*Element, 0)

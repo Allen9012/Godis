@@ -31,11 +31,10 @@ type Border interface {
 	isIntersected(max Border) bool
 }
 
-//
 // ScoreBorder represents range of a float value, including: <, <=, >, >=, +inf, -inf
-//  @Description:
-//  @Implement Border
 //
+//	@Description:
+//	@Implement Border
 type ScoreBorder struct {
 	Inf     int8
 	Value   float64
@@ -50,14 +49,14 @@ var scoreNegativeInfBorder = &ScoreBorder{
 	Inf: scoreNegativeInf,
 }
 
-//
-//
 // greater
-//  @Description: if max.greater(score) then the score is within the upper border do not use min.greater()
-//  @receiver border
-//  @param element
-//  @return bool
-//  @Implement
+//
+//	@Description: if max.greater(score) then the score is within the upper border do not use min.greater()
+//	@receiver border
+//	@param element
+//	@return bool
+//	@Implement
+//	@usage max.greater(score)
 func (border *ScoreBorder) greater(element *Element) bool {
 	value := element.Score
 	if border.Inf == scoreNegativeInf {
@@ -71,13 +70,14 @@ func (border *ScoreBorder) greater(element *Element) bool {
 	return border.Value >= value
 }
 
-//
 // less
-//  @Description:
-//  @receiver border
-//  @param element
-//  @return bool
-//  @Implement
+//
+//	@Description: if min.less(score) then the score is within the lower border do not use max.less()
+//	@receiver border
+//	@param element
+//	@return bool
+//	@Implement
+//	@usage  min.less(score)
 func (border *ScoreBorder) less(element *Element) bool {
 	value := element.Score
 	if border.Inf == scoreNegativeInf {
@@ -91,33 +91,33 @@ func (border *ScoreBorder) less(element *Element) bool {
 	return border.Value <= value
 }
 
-//
 // getValue
-//  @Description:
-//  @receiver border
-//  @return interface{}
-//  @Implement
+//
+//	@Description:
+//	@receiver border
+//	@return interface{}
+//	@Implement
 func (border *ScoreBorder) getValue() interface{} {
 	return border.Value
 }
 
-//
 // getExclude
-//  @Description:
-//  @receiver border
-//  @return bool
-//  @Implement
+//
+//	@Description:
+//	@receiver border
+//	@return bool
+//	@Implement
 func (border *ScoreBorder) getExclude() bool {
 	return border.Exclude
 }
 
-//
 // isIntersected
-//  @Description:  if min is greater than max, or min is equal to max and min is exclusive, then the two borders are not intersected
-//  @receiver border
-//  @param max
-//  @return bool
-//  @Implement
+//
+//	@Description:  if min is greater than max, or min is equal to max and min is exclusive, then the two borders are not intersected
+//	@receiver border
+//	@param max
+//	@return bool
+//	@Implement
 func (border *ScoreBorder) isIntersected(max Border) bool {
 	minValue := border.Value
 	maxValue := max.(*ScoreBorder).Value

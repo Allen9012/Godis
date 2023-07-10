@@ -1,3 +1,11 @@
+## 7/10
+实现了所有的zset，增加测试代码，找到了一个插入的bug
+1. BUG1:
+![img.png](markdown.asset/img4.png)
+2. BUG2: 没有连接
+![img_1.png](markdown.asset/img5.png)
+## 7/9 
+实现了大部分的Sortedset
 ## 7/8
 skipList的实现
 ## 7/7

@@ -12,7 +12,7 @@ func TestSortedSet_PopMin(t *testing.T) {
 	set.Add("s3", 3)
 	set.Add("s4", 4)
 	assert.Equal(t, int64(4), set.Len())
-	t.Log(set.Len())
+	t.Log(set.skiplist.length)
 	var results = set.PopMin(2)
 	t.Log(results)
 	assert.Equal(t, int64(2), set.Len())

@@ -232,7 +232,7 @@ func (skiplist *skiplist) insert(member string, score float64) *node {
 		} else {
 			rank[i] = rank[i+1] // store rank that is crossed to reach the insert position
 		}
-		if node.level[i].next != nil {
+		if node.level[i] != nil {
 			// traverse the skiplist
 			for node.level[i].next != nil &&
 				// 目标分数小，或者same score, different key
@@ -257,9 +257,18 @@ func (skiplist *skiplist) insert(member string, score float64) *node {
 	// make node and link into skiplist
 	node = make_node(level, score, member)
 	for i := int16(0); i < level; i++ {
+		// cur->next
+		node.level[i].next = update[i].level[i].next
+		// prev->cur
+		update[i].level[i].next = node
+		// update span covered by update[i] as node is inserted here
+		node.level[i].span = update[i].level[i].span - (rank[0] - rank[i])
+		update[i].level[i].span = (rank[0] - rank[i]) + 1
+	}
+	// increment span for untouched levels
+	for i := level; i < skiplist.level; i++ {
 		update[i].level[i].span++
 	}
-
 	//	set prev node (only first level)
 	if update[0] == skiplist.header {
 		node.prev = nil

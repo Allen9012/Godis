@@ -16,19 +16,19 @@ import (
 )
 
 func init() {
-	RegisterCommand("SAdd", execSAdd, -3)
-	RegisterCommand("SIsMember", execSIsMember, 3)
-	RegisterCommand("SRem", execSRem, -3)
-	RegisterCommand("SPop", execSPop, -2)
-	RegisterCommand("SCard", execSCard, 2)
-	RegisterCommand("SMembers", execSMembers, 2)
-	RegisterCommand("SInter", execSInter, -2)
-	RegisterCommand("SInterStore", execSInterStore, -3)
-	RegisterCommand("SUnion", execSUnion, -2)
-	RegisterCommand("SUnionStore", execSUnionStore, -3)
-	RegisterCommand("SDiff", execSDiff, -2)
-	RegisterCommand("SDiffStore", execSDiffStore, -3)
-	RegisterCommand("SRandMember", execSRandMember, -2)
+	registerCommand("SAdd", execSAdd, -3, flagWrite)
+	registerCommand("SIsMember", execSIsMember, 3, flagReadOnly)
+	registerCommand("SRem", execSRem, -3, flagWrite)
+	registerCommand("SPop", execSPop, -2, flagWrite)
+	registerCommand("SCard", execSCard, 2, flagReadOnly)
+	registerCommand("SMembers", execSMembers, 2, flagReadOnly)
+	registerCommand("SInter", execSInter, -2, flagReadOnly)
+	registerCommand("SInterStore", execSInterStore, -3, flagWrite)
+	registerCommand("SUnion", execSUnion, -2, flagReadOnly)
+	registerCommand("SUnionStore", execSUnionStore, -3, flagWrite)
+	registerCommand("SDiff", execSDiff, -2, flagReadOnly)
+	registerCommand("SDiffStore", execSDiffStore, -3, flagReadOnly)
+	registerCommand("SRandMember", execSRandMember, -2, flagReadOnly)
 }
 
 func (db *DB) getAsSet(key string) (*HashSet.Set, protocol.ErrorReply) {

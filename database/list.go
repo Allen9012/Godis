@@ -10,23 +10,23 @@ import (
 )
 
 /*
-	@author: Allen
-	@since: 2023/3/12
-	@desc: //list
+@author: Allen
+@since: 2023/3/12
+@desc: //list
 */
 func init() {
-	RegisterCommand("LPush", execLPush, -3)
-	RegisterCommand("LPushX", execLPushX, -3)
-	RegisterCommand("RPush", execRPush, -3)
-	RegisterCommand("RPushX", execRPushX, -3)
-	RegisterCommand("LPop", execLPop, 2)
-	RegisterCommand("RPop", execRPop, 2)
-	RegisterCommand("RPopLPush", execRPopLPush, 3)
-	RegisterCommand("LRem", execLRem, 4)
-	RegisterCommand("LLen", execLLen, 2)
-	RegisterCommand("LIndex", execLIndex, 3)
-	RegisterCommand("LSet", execLSet, 4)
-	RegisterCommand("LRange", execLRange, 4)
+	registerCommand("LPush", execLPush, -3, flagWrite)
+	registerCommand("LPushX", execLPushX, -3, flagWrite)
+	registerCommand("RPush", execRPush, -3, flagWrite)
+	registerCommand("RPushX", execRPushX, -3, flagWrite)
+	registerCommand("LPop", execLPop, 2, flagWrite)
+	registerCommand("RPop", execRPop, 2, flagWrite)
+	registerCommand("RPopLPush", execRPopLPush, 3, flagWrite)
+	registerCommand("LRem", execLRem, 4, flagWrite)
+	registerCommand("LLen", execLLen, 2, flagReadOnly)
+	registerCommand("LIndex", execLIndex, 3, flagReadOnly)
+	registerCommand("LSet", execLSet, 4, flagWrite)
+	registerCommand("LRange", execLRange, 4, flagReadOnly)
 }
 
 /*--- 辅助函数 ---*/

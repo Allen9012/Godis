@@ -16,7 +16,7 @@ import (
 
 // 初始化把所有的指令存储在cmdTable中
 func init() {
-	RegisterCommand("ping", Ping, 1)
+	registerCommand("ping", Ping, 1, flagReadOnly)
 }
 
 func Ping(db *DB, args [][]byte) godis.Reply {

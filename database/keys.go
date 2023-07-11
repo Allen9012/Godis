@@ -1,14 +1,10 @@
-/*
-*
+package database
 
+/*
 	@author: Allen
 	@since: 2023/2/26
 	@desc: //TODO
-
-*
 */
-package database
-
 import (
 	"github.com/Allen9012/Godis/aof"
 	"github.com/Allen9012/Godis/godis/protocol"
@@ -21,28 +17,28 @@ import (
 
 func init() {
 	//DEL key [key ...]
-	RegisterCommand("Del", execDel, -2)
+	registerCommand("Del", execDel, -2, flagWrite)
 	//EXISTS key [key ...]
-	RegisterCommand("Exists", execExists, -2)
+	registerCommand("Exists", execExists, -2, flagReadOnly)
 	//KEYS pattern
-	RegisterCommand("Keys", execKeys, 2)
+	registerCommand("Keys", execKeys, 2, flagReadOnly)
 	//FLUSHDB [ASYNC | SYNC]
-	RegisterCommand("FlushDB", execFlushDB, -1)
+	registerCommand("FlushDB", execFlushDB, -1, flagReadOnly)
 	//TYPE key
-	RegisterCommand("Type", execType, 2)
+	registerCommand("Type", execType, 2, flagReadOnly)
 	//RENAME key newkey
-	RegisterCommand("Rename", execRename, 3)
+	registerCommand("Rename", execRename, 3, flagReadOnly)
 	//RENAMENX key newkey
-	RegisterCommand("RenameNx", execRenameNx, 3)
-	RegisterCommand("Expire", execExpire, 3)
-	RegisterCommand("ExpireAt", execExpireAt, 3)
-	RegisterCommand("ExpireTime", execExpireTime, 2)
-	RegisterCommand("TTL", execTTL, 2)
-	RegisterCommand("Persist", execPersist, 2)
-	RegisterCommand("PTTL", execPTTL, 2)
-	RegisterCommand("PExpire", execPExpire, 3)
-	RegisterCommand("PExpireAt", execPExpireAt, 3)
-	RegisterCommand("PExpireTime", execPExpireTime, 2)
+	registerCommand("RenameNx", execRenameNx, 3, flagReadOnly)
+	registerCommand("Expire", execExpire, 3, flagWrite)
+	registerCommand("ExpireAt", execExpireAt, 3, flagWrite)
+	registerCommand("ExpireTime", execExpireTime, 2, flagReadOnly)
+	registerCommand("TTL", execTTL, 2, flagReadOnly)
+	registerCommand("Persist", execPersist, 2, flagWrite)
+	registerCommand("PTTL", execPTTL, 2, flagReadOnly)
+	registerCommand("PExpire", execPExpire, 3, flagWrite)
+	registerCommand("PExpireAt", execPExpireAt, 3, flagWrite)
+	registerCommand("PExpireTime", execPExpireTime, 2, flagReadOnly)
 }
 
 func execPExpireTime(db *DB, args [][]byte) godis.Reply {

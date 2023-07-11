@@ -21,8 +21,9 @@ type command struct {
 	// for example: the arity of `get` is 2, `mget` is -2
 	arity int
 	flags int
-	extra *commandExtra
+	extra *commandExtra // 附加信息
 }
+
 type commandExtra struct {
 	signs    []string
 	firstKey int
@@ -38,10 +39,39 @@ const (
 	flagSpecial  // command invoked in Exec
 )
 
-func RegisterCommand(name string, exector ExecFunc, arity int) {
+func registerCommand(name string, executor ExecFunc, arity int, flags int) {
 	name = strings.ToLower(name)
 	cmdTable[name] = &command{
-		executor: exector,
-		arity:    arity,
+		name:     name,
+		executor: executor,
+		//prepare:  prepare,
+		//undo:     rollback,
+		arity: arity,
+		flags: flags,
+	}
+}
+
+// TODO 使用时Extra的优化
+//// registerCommand registers a normal command, which only read or modify a limited number of keys
+//func registerCommand(name string, executor ExecFunc, prepare PreFunc, rollback UndoFunc, arity int, flags int) *command {
+//	name = strings.ToLower(name)
+//	cmd := &command{
+//		name:     name,
+//		executor: executor,
+//		prepare:  prepare,
+//		undo:     rollback,
+//		arity:    arity,
+//		flags:    flags,
+//	}
+//	cmdTable[name] = cmd
+//	return cmd
+//}
+
+func (cmd *command) attachCommandExtra(signs []string, firstKey int, lastKey int, keyStep int) {
+	cmd.extra = &commandExtra{
+		signs:    signs,
+		firstKey: firstKey,
+		lastKey:  lastKey,
+		keyStep:  keyStep,
 	}
 }

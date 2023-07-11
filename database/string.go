@@ -37,34 +37,34 @@ const (
 // SETEX
 func init() {
 	// GET key
-	RegisterCommand("Get", execGet, 2)
+	registerCommand("Get", execGet, 2, flagReadOnly)
 	// SET key value (只实现最简单的模式)
-	RegisterCommand("Set", execSet, -3)
+	registerCommand("Set", execSet, -3, flagWrite)
 	// SETNX key value
-	RegisterCommand("SetNx", execSetNX, 3)
+	registerCommand("SetNx", execSetNX, 3, flagWrite)
 	// GETSET key value
-	RegisterCommand("GetSet", execGetSet, 3)
+	registerCommand("GetSet", execGetSet, 3, flagWrite)
 	// STRLEN key
-	RegisterCommand("StrLen", execStrLen, 2)
+	registerCommand("StrLen", execStrLen, 2, flagReadOnly)
 	// GETEX key +
-	RegisterCommand("GetEx", execGetEX, -2)
+	registerCommand("GetEx", execGetEX, -2, flagReadOnly)
 	// SETEX key seconds value
-	RegisterCommand("SetEx", execSetEX, 4)
+	registerCommand("SetEx", execSetEX, 4, flagWrite)
 
-	RegisterCommand("GetDel", execGetDel, 2)
+	registerCommand("GetDel", execGetDel, 2, flagWrite)
 	// INCR associated
-	RegisterCommand("Incr", execIncr, 2)
-	RegisterCommand("IncrBy", execIncrBy, 3)
-	RegisterCommand("IncrByFloat", execIncrByFloat, 3)
-	RegisterCommand("Decr", execDecr, 2)
-	RegisterCommand("DecrBy", execDecrBy, 3)
+	registerCommand("Incr", execIncr, 2, flagWrite)
+	registerCommand("IncrBy", execIncrBy, 3, flagWrite)
+	registerCommand("IncrByFloat", execIncrByFloat, 3, flagWrite)
+	registerCommand("Decr", execDecr, 2, flagWrite)
+	registerCommand("DecrBy", execDecrBy, 3, flagWrite)
 	// APPEND key value
-	RegisterCommand("Append", execAppend, 3)
+	registerCommand("Append", execAppend, 3, flagWrite)
 	// BitMap
-	RegisterCommand("SetBit", execSetBit, 4)
-	RegisterCommand("GetBit", execGetBit, 3)
-	RegisterCommand("BitCount", execBitCount, -2)
-	RegisterCommand("BitPos", execBitPos, -3)
+	registerCommand("SetBit", execSetBit, 4, flagWrite)
+	registerCommand("GetBit", execGetBit, 3, flagReadOnly)
+	registerCommand("BitCount", execBitCount, -2, flagReadOnly)
+	registerCommand("BitPos", execBitPos, -3, flagWrite)
 }
 
 // getAsString

@@ -22,7 +22,7 @@ type Config struct {
 	Timeout    time.Duration `yaml:"timeout"`
 }
 
-// ClientCounter Record the number of clients in the current Godis server
+// ClientCounter Record the number of clients in the current godis server
 var ClientCounter int
 
 // ListenAndServeWithSignal 启动服务

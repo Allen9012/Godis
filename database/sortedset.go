@@ -1,8 +1,8 @@
 package database
 
 import (
-	"github.com/Allen9012/Godis/Godis/protocol"
 	SortedSet "github.com/Allen9012/Godis/datastruct/sortedset"
+	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
@@ -111,14 +111,76 @@ func execZAdd(db *DB, args [][]byte) godis.Reply {
 	return protocol.MakeIntReply(int64(i))
 }
 
+// execZScore gets score of a member in sortedset
+//
+//	@Description: ZSCORE key member
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZScore(db *DB, args [][]byte) godis.Reply {
-	return nil
+	if len(args) != 2 {
+		return protocol.MakeArgNumErrReply("zscore")
+	}
+	// parse args
+	key := string(args[0])
+	member := string(args[1])
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeNullBulkReply()
+	}
+	element, exists := sortedSet.Get(member)
+	if !exists {
+		return protocol.MakeNullBulkReply()
+	}
+	value := strconv.FormatFloat(element.Score, 'f', -1, 64)
+	return protocol.MakeBulkReply([]byte(value))
 }
 
+// execZIncrBy increments the score of a member
+//
+//	@Description: ZINCRBY key increment member
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZIncrBy(db *DB, args [][]byte) godis.Reply {
-	return nil
+	if len(args) != 3 {
+		return protocol.MakeArgNumErrReply("zincrby")
+	}
+	// parse args
+	key := string(args[0])
+	incrementValue := string(args[1])
+	member := string(args[2])
+	delta, err := strconv.ParseFloat(incrementValue, 64)
+	if err != nil {
+		return protocol.MakeErrReply("ERR value is not a valid float")
+	}
+	// get or init entity
+	sortedSet, _, errReply := db.getOrInitSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	element, exists := sortedSet.Get(member)
+	if !exists {
+		sortedSet.Add(member, delta)
+		db.addAof(utils.ToCmdLine3("zincrby", args...))
+		return protocol.MakeBulkReply(args[1])
+	}
+	score := element.Score + delta
+	sortedSet.Add(member, score)
+	bytes := []byte(strconv.FormatFloat(score, 'f', -1, 64))
+	db.addAof(utils.ToCmdLine3("zincrby", args...))
+	return protocol.MakeBulkReply(bytes)
 }
 
+// execZRank gets index of a member in sortedset, ascending order, start from 0
+//
+//	@Description: ZRANK key member [WITHSCORE]
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRank(db *DB, args [][]byte) godis.Reply {
 	return nil
 }

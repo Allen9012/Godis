@@ -530,8 +530,16 @@ func execZRem(db *DB, args [][]byte) godis.Reply {
 	return protocol.MakeIntReply(deleted)
 }
 
+// execZRemRangeByScore removes members with score in given range
+//
+//	@Description: ZREMRANGEBYSCORE key min max
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRemRangeByScore(db *DB, args [][]byte) godis.Reply {
-	return nil
+	if len(args) != 3 {
+		return protocol.MakeArgNumErrReply("zremrangebyscore")
+	}
 }
 
 func execZRemRangeByRank(db *DB, args [][]byte) godis.Reply {

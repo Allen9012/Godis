@@ -1,5 +1,10 @@
 package sortedset
 
+import (
+	"errors"
+	"strconv"
+)
+
 /**
   Copyright © 2023 github.com/Allen9012 All rights reserved.
   @author: Allen
@@ -122,4 +127,41 @@ func (border *ScoreBorder) isIntersected(max Border) bool {
 	minValue := border.Value
 	maxValue := max.(*ScoreBorder).Value
 	return minValue > maxValue || (minValue == maxValue && (border.getExclude() || max.getExclude()))
+}
+
+//	ParseScoreBorder creates ScoreBorder from redis arguments
+//
+// @Description:
+// @param s
+// @return Border
+// @return error
+func ParseScoreBorder(s string) (Border, error) {
+	// 解释左边界
+	if s == "inf" || s == "+inf" {
+		return scorePositiveInfBorder, nil
+	}
+	if s == "-inf" {
+		return scoreNegativeInfBorder, nil
+	}
+	if s[0] == '(' {
+		value, err := strconv.ParseFloat(s[1:], 64)
+		if err != nil {
+			return nil, errors.New("ERR min or max is not a float")
+		}
+		return &ScoreBorder{
+			Inf:     scorePositiveInf,
+			Value:   value,
+			Exclude: true,
+		}, nil
+	}
+	// 解释右边界
+	value, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return nil, errors.New("ERR min or max is not a float")
+	}
+	return &ScoreBorder{
+		Inf:     scorePositiveInf,
+		Value:   value,
+		Exclude: false,
+	}, nil
 }

@@ -165,3 +165,97 @@ func ParseScoreBorder(s string) (Border, error) {
 		Exclude: false,
 	}, nil
 }
+
+// LexBorder represents range of a string value, including: <, <=, >, >=, +, -
+// @Implement
+type LexBorder struct {
+	Inf     int8
+	Value   string
+	Exclude bool
+}
+
+// if max.greater(lex) then the lex is within the upper border
+// do not use min.greater()
+// @Implement
+func (border *LexBorder) greater(element *Element) bool {
+	value := element.Member
+	if border.Inf == lexNegativeInf {
+		return false
+	} else if border.Inf == lexPositiveInf {
+		return true
+	}
+	if border.Exclude {
+		return border.Value > value
+	}
+	return border.Value >= value
+}
+
+// @Implement
+func (border *LexBorder) less(element *Element) bool {
+	value := element.Member
+	if border.Inf == lexNegativeInf {
+		return true
+	} else if border.Inf == lexPositiveInf {
+		return false
+	}
+	if border.Exclude {
+		return border.Value < value
+	}
+	return border.Value <= value
+}
+
+// @Implement
+func (border *LexBorder) getValue() interface{} {
+	return border.Value
+}
+
+// @Implement
+func (border *LexBorder) getExclude() bool {
+	return border.Exclude
+}
+
+var lexPositiveInfBorder = &LexBorder{
+	Inf: lexPositiveInf,
+}
+
+var lexNegativeInfBorder = &LexBorder{
+	Inf: lexNegativeInf,
+}
+
+// ParseLexBorder
+//
+//	@Description: creates LexBorder from redis arguments
+//	@param s
+//	@return Border
+//	@return error
+func ParseLexBorder(s string) (Border, error) {
+	if s == "+" {
+		return lexPositiveInfBorder, nil
+	}
+	if s == "-" {
+		return lexNegativeInfBorder, nil
+	}
+	if s[0] == '(' {
+		return &LexBorder{
+			Inf:     0,
+			Value:   s[1:],
+			Exclude: true,
+		}, nil
+	}
+
+	if s[0] == '[' {
+		return &LexBorder{
+			Inf:     0,
+			Value:   s[1:],
+			Exclude: false,
+		}, nil
+	}
+
+	return nil, errors.New("ERR min or max not valid string range item")
+}
+
+func (border *LexBorder) isIntersected(max Border) bool {
+	minValue := border.Value
+	maxValue := max.(*LexBorder).Value
+	return border.Inf == '+' || minValue > maxValue || (minValue == maxValue && (border.getExclude() || max.getExclude()))
+}

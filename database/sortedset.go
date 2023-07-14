@@ -6,6 +6,7 @@ import (
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -540,26 +541,276 @@ func execZRemRangeByScore(db *DB, args [][]byte) godis.Reply {
 	if len(args) != 3 {
 		return protocol.MakeArgNumErrReply("zremrangebyscore")
 	}
+	key := string(args[0])
+	min, err := SortedSet.ParseScoreBorder(string(args[1]))
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	max, err := SortedSet.ParseScoreBorder(string(args[2]))
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+
+	//	 get data
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeNullBulkReply()
+	}
+	removed := sortedSet.RemoveRange(min, max)
+	if removed > 0 {
+		db.addAof(utils.ToCmdLine3("zremrangebyscore", args...))
+	}
+	return protocol.MakeIntReply(removed)
 }
 
+// execZRemRangeByRank removes members in given rank range
+//
+//	@Description: ZREMRANGEBYRANK key start stop
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRemRangeByRank(db *DB, args [][]byte) godis.Reply {
-	return nil
+	if len(args) != 3 {
+		return protocol.MakeArgNumErrReply("zremrangebyrank")
+	}
+	key := string(args[0])
+	start, err := strconv.ParseInt(string(args[1]), 10, 64)
+	if err != nil {
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	stop, err := strconv.ParseInt(string(args[2]), 10, 64)
+	if err != nil {
+		return protocol.MakeErrReply("ERR value is not an integer or out of range")
+	}
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeIntReply(0)
+	}
+	// 处理start和stop
+	size := sortedSet.Len() // size > 0
+	if start < -1*size {
+		start = 0
+	} else if start < 0 {
+		start = size + start
+	} else if start >= size {
+		return protocol.MakeIntReply(0)
+	}
+	if stop < -1*size {
+		stop = 0
+	} else if stop < 0 {
+		stop = size + stop
+	} else if stop < size {
+		stop = stop + 1
+	} else {
+		stop = size
+	}
+	if stop < start {
+		stop = start
+	}
+	removed := sortedSet.RemoveByRank(start, stop)
+	return protocol.MakeIntReply(removed)
 }
 
+// execZLexCount returns the number of elements in the sorted set at key with a lexicographical value between min and max.
+//
+//	@Description: ZLEXCOUNT key min max
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZLexCount(db *DB, args [][]byte) godis.Reply {
-	return nil
+	key := string(args[0])
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeIntReply(0)
+	}
+
+	minEle, maxEle := string(args[1]), string(args[2])
+	min, err := SortedSet.ParseLexBorder(minEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	max, err := SortedSet.ParseLexBorder(maxEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+
+	count := sortedSet.RangeCount(min, max)
+
+	return protocol.MakeIntReply(count)
 }
 
+// execZRangeByLex returns all the elements in the sorted set at key with a lexicographical value between min and max
+//
+//	@Description: ZRANGEBYLEX key min max [LIMIT offset count]
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRangeByLex(db *DB, args [][]byte) godis.Reply {
-	return nil
+	// 检查参数
+	n := len(args)
+	if n > 3 && strings.ToLower(string(args[3])) != "limit" {
+		return protocol.MakeErrReply("ERR syntax error")
+	}
+	if n != 3 && n != 6 {
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'zrangebylex' command")
+	}
+	key := string(args[0])
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeEmptyMultiBulkReply()
+	}
+	minEle, maxEle := string(args[1]), string(args[2])
+	min, err := SortedSet.ParseLexBorder(minEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	max, err := SortedSet.ParseLexBorder(maxEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	offset := int64(0)
+	limitCnt := int64(math.MaxInt64)
+	if n > 3 {
+		var err error
+		offset, err = strconv.ParseInt(string(args[4]), 10, 64)
+		if err != nil {
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		if offset < 0 {
+			return protocol.MakeEmptyMultiBulkReply()
+		}
+		count, err := strconv.ParseInt(string(args[5]), 10, 64)
+		if err != nil {
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		if count >= 0 {
+			limitCnt = count
+		}
+	}
+	//
+	elements := sortedSet.Range(min, max, offset, limitCnt, false)
+	result := make([][]byte, 0, len(elements))
+	for _, ele := range elements {
+		result = append(result, []byte(ele.Member))
+	}
+	if len(result) == 0 {
+		return protocol.MakeEmptyMultiBulkReply()
+	}
+	return protocol.MakeMultiBulkReply(result)
 }
 
+// execZRemRangeByLex returns the number of elements removed.
+//
+//	@Description: ZREMRANGEBYLEX key min max
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRemRangeByLex(db *DB, args [][]byte) godis.Reply {
-	return nil
+	n := len(args)
+	if n != 3 {
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'zremrangebylex' command")
+	}
+
+	key := string(args[0])
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeIntReply(0)
+	}
+
+	minEle, maxEle := string(args[1]), string(args[2])
+	min, err := SortedSet.ParseLexBorder(minEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	max, err := SortedSet.ParseLexBorder(maxEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	// 使用removeRange接口
+	count := sortedSet.RemoveRange(min, max)
+
+	return protocol.MakeIntReply(count)
 }
 
+// execZRevRangeByLex returns all the elements in the sorted set at key with a lexicographical value between min and max
+//
+//	@Description: ZREVRANGEBYLEX key max min [LIMIT offset count]
+//	@param db
+//	@param args
+//	@return godis.Reply
 func execZRevRangeByLex(db *DB, args [][]byte) godis.Reply {
-	return nil
+	// 检查参数
+	n := len(args)
+	if n > 3 && strings.ToLower(string(args[3])) != "limit" {
+		return protocol.MakeErrReply("ERR syntax error")
+	}
+	if n != 3 && n != 6 {
+		return protocol.MakeErrReply("ERR wrong number of arguments for 'zrangebylex' command")
+	}
+
+	key := string(args[0])
+	sortedSet, errReply := db.getAsSortedSet(key)
+	if errReply != nil {
+		return errReply
+	}
+	if sortedSet == nil {
+		return protocol.MakeIntReply(0)
+	}
+
+	minEle, maxEle := string(args[2]), string(args[1])
+	min, err := SortedSet.ParseLexBorder(minEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+	max, err := SortedSet.ParseLexBorder(maxEle)
+	if err != nil {
+		return protocol.MakeErrReply(err.Error())
+	}
+
+	offset := int64(0)
+	limitCnt := int64(math.MaxInt64)
+	if n > 3 {
+		var err error
+		offset, err = strconv.ParseInt(string(args[4]), 10, 64)
+		if err != nil {
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		if offset < 0 {
+			return protocol.MakeEmptyMultiBulkReply()
+		}
+		count, err := strconv.ParseInt(string(args[5]), 10, 64)
+		if err != nil {
+			return protocol.MakeErrReply("ERR value is not an integer or out of range")
+		}
+		if count >= 0 {
+			limitCnt = count
+		}
+	}
+	// 使用range接口
+	elements := sortedSet.Range(min, max, offset, limitCnt, true)
+	result := make([][]byte, 0, len(elements))
+	for _, ele := range elements {
+		result = append(result, []byte(ele.Member))
+	}
+	if len(result) == 0 {
+		return protocol.MakeEmptyMultiBulkReply()
+	}
+	return protocol.MakeMultiBulkReply(result)
 }
 
 // range0 gets members in range, sort by score in ascending order

@@ -3,7 +3,7 @@ package dict
 /**
   @author: Allen
   @since: 2023/2/25
-  @desc: // 系统最底层的保存数据的接口
+  @desc: // 系统最底层的保存数据的接口 当前底层使用的是sync_dict
 **/
 import "sync"
 
@@ -65,13 +65,13 @@ func (dict *SyncDict) PutIfExists(key string, val interface{}) (result int) {
 }
 
 // Remove removes the key and return the number of deleted key-value
-func (dict *SyncDict) Remove(key string) (result int) {
+func (dict *SyncDict) Remove(key string) (val interface{}, result int) {
 	_, existed := dict.m.Load(key)
 	dict.m.Delete(key)
 	if existed {
-		return 1
+		return nil, 1
 	}
-	return 0
+	return nil, 0
 }
 
 // ForEach traversal the dict

@@ -15,7 +15,7 @@ type Dict interface {
 	Put(key string, val interface{}) (result int)
 	PutIfAbsent(key string, val interface{}) (result int)
 	PutIfExists(key string, val interface{}) (result int)
-	Remove(key string) (result int)
+	Remove(key string) (val interface{}, result int)
 	ForEach(consumer Consumer)
 	Keys() []string
 	RandomKeys(limit int) []string         //返回limit数量的键

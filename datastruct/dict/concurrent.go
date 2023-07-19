@@ -59,12 +59,11 @@ func MakeConcurrent(shardCount int) *ConcurrentDict {
 // 选择转换的32位FNV素数
 const prime32 = uint32(16777619)
 
-//
 // fnv32
-//  @Description: 用于计算key的hash值
-//  @param key
-//  @return uint32
 //
+//	@Description: 用于计算key的hash值
+//	@param key
+//	@return uint32
 func fnv32(key string) uint32 {
 	// 选择32位FNV偏移基数
 	hash := uint32(2166136261)
@@ -75,13 +74,12 @@ func fnv32(key string) uint32 {
 	return hash
 }
 
-//
 // spread
-//  @Description: 用于将hashCode转换为table的index
-//  @receiver dict
-//  @param hashCode
-//  @return uint32
 //
+//	@Description: 用于将hashCode转换为table的index
+//	@receiver dict
+//	@param hashCode
+//	@return uint32
 func (dict *ConcurrentDict) spread(hashCode uint32) uint32 {
 	if dict == nil {
 		panic("dict is nil")
@@ -98,7 +96,6 @@ func (dict *ConcurrentDict) getShard(index uint32) *shard {
 	return dict.table[index]
 }
 
-//
 // Get returns the value and exists flag for the given key
 // Implement dict
 func (dict *ConcurrentDict) Get(key string) (val interface{}, exists bool) {
@@ -114,8 +111,8 @@ func (dict *ConcurrentDict) Get(key string) (val interface{}, exists bool) {
 	return
 }
 
-// GetWithLock 不安全的Get，使用时需要自己加锁
-func (dict *ConcurrentDict) GetWithLock(key string) (val interface{}, exists bool) {
+// GetWithinLock  不安全的Get，使用时需要自己加锁
+func (dict *ConcurrentDict) GetWithinLock(key string) (val interface{}, exists bool) {
 	if dict == nil {
 		panic("dict is nil")
 	}
@@ -156,8 +153,8 @@ func (dict *ConcurrentDict) Put(key string, val interface{}) (result int) {
 	return 1
 }
 
-// PutWithLock 不安全的Put，使用时需要自己加锁
-func (dict *ConcurrentDict) PutWithLock(key string, val interface{}) (result int) {
+// PutWithinLock  不安全的Put，使用时需要自己加锁
+func (dict *ConcurrentDict) PutWithinLock(key string, val interface{}) (result int) {
 	if dict == nil {
 		panic("dict is nil")
 	}
@@ -194,8 +191,8 @@ func (dict *ConcurrentDict) PutIfAbsent(key string, val interface{}) (result int
 	return 1
 }
 
-// PutIfAbsentWithLock 不安全的PutIfAbsent，使用时需要自己加锁
-func (dict *ConcurrentDict) PutIfAbsentWithLock(key string, val interface{}) (result int) {
+// PutIfAbsentWithinLock  不安全的PutIfAbsent，使用时需要自己加锁
+func (dict *ConcurrentDict) PutIfAbsentWithinLock(key string, val interface{}) (result int) {
 	if dict == nil {
 		panic("dict is nil")
 	}
@@ -230,6 +227,21 @@ func (dict *ConcurrentDict) PutIfExists(key string, val interface{}) (result int
 	return 0
 }
 
+// PutIfExistsWithinLock  不安全的PutIfExists，使用时需要自己加锁
+func (dict *ConcurrentDict) PutIfExistsWithinLock(key string, val interface{}) (result int) {
+	if dict == nil {
+		panic("dict is nil")
+	}
+	hashCode := fnv32(key)
+	index := dict.spread(hashCode)
+	s := dict.getShard(index)
+	if _, ok := s.m[key]; ok {
+		s.m[key] = val
+		return 1
+	}
+	return 0
+}
+
 // Remove removes the key and return the number of deleted key-value
 // Implement dict
 func (dict *ConcurrentDict) Remove(key string) (val interface{}, result int) {
@@ -241,6 +253,23 @@ func (dict *ConcurrentDict) Remove(key string) (val interface{}, result int) {
 	s := dict.getShard(index)
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	if val, ok := s.m[key]; ok {
+		delete(s.m, key)
+		dict.decreaseCount()
+		return val, 1
+	}
+	return nil, 0
+}
+
+// RemoveWithinLock  不安全的Remove，使用时需要自己加锁
+func (dict *ConcurrentDict) RemoveWithinLock(key string) (val interface{}, result int) {
+	if dict == nil {
+		panic("dict is nil")
+	}
+	hashCode := fnv32(key)
+	index := dict.spread(hashCode)
+	s := dict.getShard(index)
 
 	if val, ok := s.m[key]; ok {
 		delete(s.m, key)
@@ -317,10 +346,12 @@ func (dict *ConcurrentDict) RandomKeys(limit int) []string {
 	result := make([]string, limit)
 	nR := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < limit; {
+		// 随机获得一个shard
 		s := dict.getShard(uint32(nR.Intn(shardCount)))
 		if s == nil {
 			continue
 		}
+		// shard中随机获得一个key
 		key := s.RandomKey()
 		if key != "" {
 			result[i] = key
@@ -369,6 +400,7 @@ func (dict *ConcurrentDict) Clear() {
 	*dict = *MakeConcurrent(dict.shardCount)
 }
 
+/* ----- 统计key的数量 -----*/
 // key总数增加
 func (dict *ConcurrentDict) addCount() int32 {
 	return atomic.AddInt32(&dict.count, 1)
@@ -379,16 +411,20 @@ func (dict *ConcurrentDict) decreaseCount() int32 {
 	return atomic.AddInt32(&dict.count, -1)
 }
 
+// 把普通的keys切片转化为分段锁的map形式
 func (dict *ConcurrentDict) toLockIndices(keys []string, reverse bool) []uint32 {
 	indexMap := make(map[uint32]struct{})
+	// 初始化分段锁map
 	for _, key := range keys {
 		index := dict.spread(fnv32(key))
 		indexMap[index] = struct{}{}
 	}
+	// 创建一个indice切片
 	indices := make([]uint32, 0, len(indexMap))
 	for index := range indexMap {
 		indices = append(indices, index)
 	}
+	// 排序
 	sort.Slice(indices, func(i, j int) bool {
 		if !reverse {
 			return indices[i] < indices[j]
@@ -401,12 +437,15 @@ func (dict *ConcurrentDict) toLockIndices(keys []string, reverse bool) []uint32 
 // RWLocks locks write keys and read keys together. allow duplicate keys
 func (dict *ConcurrentDict) RWLocks(writeKeys []string, readKeys []string) {
 	keys := append(writeKeys, readKeys...)
+	// 初始化concurrentMap，然后把keys转化返回一个排序好后的index的切片
 	indices := dict.toLockIndices(keys, false)
+	// 初始化一个写锁的map
 	writeIndexSet := make(map[uint32]struct{})
 	for _, wKey := range writeKeys {
 		idx := dict.spread(fnv32(wKey))
 		writeIndexSet[idx] = struct{}{}
 	}
+	// 分别加读锁或者写锁
 	for _, index := range indices {
 		_, w := writeIndexSet[index]
 		mu := &dict.table[index].mutex

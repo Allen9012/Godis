@@ -1,14 +1,10 @@
-/*
-*
+package cluster
 
+/*
 	@author: Allen
 	@since: 2023/2/28
 	@desc: //借助go-commons-pool实现client连接池
-
-*
 */
-package cluster
-
 import (
 	"context"
 	"errors"

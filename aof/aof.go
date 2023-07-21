@@ -1,14 +1,10 @@
-/*
-*
+package aof
 
+/*
 	@author: Allen
 	@since: 2023/2/27
 	@desc: //aof
-
-*
 */
-package aof
-
 import (
 	"github.com/Allen9012/Godis/godis/connection"
 	"github.com/Allen9012/Godis/godis/parser"
@@ -219,10 +215,6 @@ func NewPersister(db database.DBEngine, filename string, load bool, fsync string
 	persister.aofChan = make(chan *payload, aofQueueSize)
 	persister.aofFinished = make(chan struct{})
 	persister.listeners = make(map[Listener]struct{})
-	// start aof goroutine to write aof file in background and fsync periodically if needed (see fsyncEverySecond)
-	go func() {
-		persister.listenCmd()
-	}()
 	ctx, cancel := context.WithCancel(context.Background())
 	persister.ctx = ctx
 	persister.cancel = cancel
@@ -230,6 +222,10 @@ func NewPersister(db database.DBEngine, filename string, load bool, fsync string
 	if persister.aofFsync == FsyncEverySec {
 		persister.fsyncEverySecond()
 	}
+	// start aof goroutine to write aof file in background and fsync periodically if needed (see fsyncEverySecond)
+	go func() {
+		persister.listenCmd()
+	}()
 	return persister, nil
 }
 
@@ -244,7 +240,7 @@ func (persister *Persister) LoadAof(maxBytes int) {
 	defer func(aofChan chan *payload) {
 		persister.aofChan = aofChan
 	}(aofChan)
-	//打开file，开启reader
+	// 打开file，开启reader
 	file, err := os.Open(persister.aofFilename)
 	if err != nil {
 		if _, ok := err.(*os.PathError); ok {
@@ -317,6 +313,7 @@ func (persister *Persister) fsyncEverySecond() {
 				}
 				persister.pausingAof.Unlock()
 			case <-persister.ctx.Done():
+				// 停止刷新和退出刷新
 				return
 			}
 		}
@@ -336,6 +333,7 @@ func (persister *Persister) Close() {
 	persister.cancel()
 }
 
+// 写日志的时候独占写
 func (persister *Persister) writeAof(p *payload) {
 	persister.buffer = persister.buffer[:0] // reuse underlying array
 	persister.pausingAof.Lock()             // prevent other goroutines from pausing aof

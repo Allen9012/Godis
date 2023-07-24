@@ -35,6 +35,8 @@ func (sortedSet *SortedSet) Add(member string, score float64) bool {
 			sortedSet.skiplist.remove(member, element.Score)
 			sortedSet.skiplist.insert(member, score)
 		}
+		// 如果是修改就return false, 不表示增加了一个新的member
+		return false
 	}
 	sortedSet.skiplist.insert(member, score)
 	return true

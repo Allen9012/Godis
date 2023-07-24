@@ -417,12 +417,12 @@ func execZRevRangeByScore(db *DB, args [][]byte) godis.Reply {
 	}
 	key := string(args[0])
 
-	min, err := SortedSet.ParseScoreBorder(string(args[1]))
+	max, err := SortedSet.ParseScoreBorder(string(args[1]))
 	if err != nil {
 		return protocol.MakeErrReply(err.Error())
 	}
 
-	max, err := SortedSet.ParseScoreBorder(string(args[2]))
+	min, err := SortedSet.ParseScoreBorder(string(args[2]))
 	if err != nil {
 		return protocol.MakeErrReply(err.Error())
 	}
@@ -832,27 +832,30 @@ func range0(db *DB, key string, start int64, stop int64, withScores bool, desc b
 	if sortedSet == nil {
 		return protocol.MakeEmptyMultiBulkReply()
 	}
-	// mutate index
-	size := sortedSet.Len()
+	// compute index
+	size := sortedSet.Len() // assert: size > 0
 	if start < -1*size {
 		start = 0
 	} else if start < 0 {
 		start = size + start
 	} else if start >= size {
-		return protocol.MakeEmptyMultiBulkReply()
+		return &protocol.EmptyMultiBulkReply{}
 	}
 	if stop < -1*size {
 		stop = 0
 	} else if stop < 0 {
-		stop = size + stop
+		stop = size + stop + 1
 	} else if stop < size {
 		stop = stop + 1
 	} else {
 		stop = size
 	}
-
+	if stop < start {
+		stop = start
+	}
 	// assert: start in [0, size - 1], stop in [start, size]
 	slice := sortedSet.RangeByRank(start, stop, desc)
+	// 判断是否需要携带score
 	if withScores {
 		result := make([][]byte, len(slice)*2)
 		i := 0
@@ -864,12 +867,13 @@ func range0(db *DB, key string, start int64, stop int64, withScores bool, desc b
 			i++
 		}
 		return protocol.MakeMultiBulkReply(result)
+	} else {
+		result := make([][]byte, len(slice))
+		for i, element := range slice {
+			result[i] = []byte(element.Member)
+		}
+		return protocol.MakeMultiBulkReply(result)
 	}
-	result := make([][]byte, len(slice))
-	for i, element := range slice {
-		result[i] = []byte(element.Member)
-	}
-	return protocol.MakeMultiBulkReply(result)
 }
 
 // rangeByScore0 param limit: limit < 0 means no limit

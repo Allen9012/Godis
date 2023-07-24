@@ -1,3 +1,19 @@
+## 7/24
+解决sorted和hash的报错信息
+错误1：
+![img_1.png](img_1.png)
+报错2
+![img.png](img.png)
+是计算stop和start的时候有一点问题
+![img_2.png](img_2.png)
+报错3:
+![img_3.png](img_3.png)
+原因是inf有问题：Inf的初始化应该是0，否则会
+![img_4.png](img_4.png)
+在这里报错
+![img_5.png](img_5.png)
+还有max和min写反，这里反过来
+![img_6.png](img_6.png)
 ## 7/19 
 实现了hash和sortedSet
 但是测试still没有通过，还存在一些bug

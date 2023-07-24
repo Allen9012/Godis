@@ -149,7 +149,7 @@ func ParseScoreBorder(s string) (Border, error) {
 			return nil, errors.New("ERR min or max is not a float")
 		}
 		return &ScoreBorder{
-			Inf:     scorePositiveInf,
+			Inf:     0,
 			Value:   value,
 			Exclude: true,
 		}, nil
@@ -160,7 +160,7 @@ func ParseScoreBorder(s string) (Border, error) {
 		return nil, errors.New("ERR min or max is not a float")
 	}
 	return &ScoreBorder{
-		Inf:     scorePositiveInf,
+		Inf:     0,
 		Value:   value,
 		Exclude: false,
 	}, nil

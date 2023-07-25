@@ -94,12 +94,11 @@ func (skiplist *skiplist) get_rank(member string, score float64) int64 {
 	return 0
 }
 
-//
 // get_by_rank
-//  @Description: 1 based rank, 0 means member not found
-//  @receiver skiplist
-//  @param rank
 //
+//	@Description: 1 based rank, 0 means member not found
+//	@receiver skiplist
+//	@param rank
 func (skiplist *skiplist) get_by_rank(rank int64) *node {
 	var i int64 = 0
 	n := skiplist.header
@@ -129,14 +128,13 @@ func (skiplist *skiplist) get_by_rank(rank int64) *node {
 //
 //}
 
-//
 // has_in_range
-//  @Description check if there is any element in range (min, max)
-//  @receiver skiplist
-//  @param min
-//  @param max
-//  @return bool
 //
+//	@Description check if there is any element in range (min, max)
+//	@receiver skiplist
+//	@param min
+//	@param max
+//	@return bool
 func (skiplist *skiplist) has_in_range(min Border, max Border) bool {
 	if min.isIntersected(max) { //是有交集的，则返回false
 		return false
@@ -155,14 +153,13 @@ func (skiplist *skiplist) has_in_range(min Border, max Border) bool {
 	return true
 }
 
-//
 // getFirstInRange
-//  @Description:找到分数范围内第一个节点
-//  @receiver skiplist
-//  @param min
-//  @param max
-//  @return *node
 //
+//	@Description:找到分数范围内第一个节点
+//	@receiver skiplist
+//	@param min
+//	@param max
+//	@return *node
 func (skiplist *skiplist) get_first_in_range(min Border, max Border) *node {
 	if !skiplist.has_in_range(min, max) {
 		return nil
@@ -183,14 +180,13 @@ func (skiplist *skiplist) get_first_in_range(min Border, max Border) *node {
 	return n
 }
 
-//
 // getLastInRange
-//  @Description: 找到分数范围内最后一个节点
-//  @receiver skiplist
-//  @param min
-//  @param max
-//  @return *node
 //
+//	@Description: 找到分数范围内最后一个节点
+//	@receiver skiplist
+//	@param min
+//	@param max
+//	@return *node
 func (skiplist *skiplist) get_last_in_range(min Border, max Border) *node {
 	if !skiplist.has_in_range(min, max) {
 		return nil
@@ -198,8 +194,8 @@ func (skiplist *skiplist) get_last_in_range(min Border, max Border) *node {
 	n := skiplist.header
 	// scan from top level
 	for lv := skiplist.level - 1; lv >= 0; lv-- {
-		// 如果还有下一个节点，且下一个节点的分数小于等于min，则继续向后遍历
-		for n.level[lv].next != nil && !max.greater(&n.level[lv].next.Element) {
+		// 如果还有下一个节点，且下一个节点的分数小于等于max，则继续向后遍历
+		for n.level[lv].next != nil && max.greater(&n.level[lv].next.Element) {
 			n = n.level[lv].next
 		}
 	}
@@ -286,14 +282,13 @@ func (skiplist *skiplist) insert(member string, score float64) *node {
 
 /*	-----	DELETE   -----  */
 
-//
 // remove
-//  @Description: has found and removed node
-//  @receiver skiplist
-//  @param member
-//  @param score
-//  @return bool
 //
+//	@Description: has found and removed node
+//	@receiver skiplist
+//	@param member
+//	@param score
+//	@return bool
 func (skiplist *skiplist) remove(member string, score float64) bool {
 	/*
 	 * find backward node (of target) or last node of each level
@@ -317,13 +312,12 @@ func (skiplist *skiplist) remove(member string, score float64) bool {
 	return false
 }
 
-//
 // Remove_node
-//  @Description: remove node from skiplist
-//  @receiver skiplist
-//  @param node
-//  @param update
 //
+//	@Description: remove node from skiplist
+//	@receiver skiplist
+//	@param node
+//	@param update
 func (skiplist *skiplist) remove_node(node *node, update []*node) {
 	// 修改span数量和指针的连接
 	for i := int16(0); i < skiplist.level; i++ {
@@ -349,15 +343,14 @@ func (skiplist *skiplist) remove_node(node *node, update []*node) {
 	skiplist.length--
 }
 
-//
 // remove_range
-//  @Description: return removed elements
-//  @receiver skiplist
-//  @param min
-//  @param max
-//  @param limit
-//  @return removed
 //
+//	@Description: return removed elements
+//	@receiver skiplist
+//	@param min
+//	@param max
+//	@param limit
+//	@return removed
 func (skiplist *skiplist) remove_range(min Border, max Border, limit int) (removed []*Element) {
 	update := make([]*node, maxLevel)
 	removed = make([]*Element, 0)
@@ -393,14 +386,13 @@ func (skiplist *skiplist) remove_range(min Border, max Border, limit int) (remov
 	return removed
 }
 
-//
 // RemoveRangeByRank
-//  @Description: 通过排名的start和stop来移除元素
-//  @receiver skiplist
-//  @param start
-//  @param stop
-//  @return removed
 //
+//	@Description: 通过排名的start和stop来移除元素
+//	@receiver skiplist
+//	@param start
+//	@param stop
+//	@return removed
 func (skiplist *skiplist) remove_range_by_rank(start int64, stop int64) (removed []*Element) {
 	var i int64 = 0 // rank of iterator
 	update := make([]*node, maxLevel)

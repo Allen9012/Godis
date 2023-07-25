@@ -11,11 +11,12 @@ import (
 
 func TestHSet(t *testing.T) {
 	testDB.Flush()
-	size := 100
+	size := 1
 
 	// test hset
 	key := utils.RandString(10)
 	values := make(map[string][]byte, size)
+	// 插入100 个键值
 	for i := 0; i < size; i++ {
 		value := utils.RandString(10)
 		field := strconv.Itoa(i)

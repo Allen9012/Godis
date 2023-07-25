@@ -3,6 +3,7 @@ package database
 import (
 	Dict "github.com/Allen9012/Godis/datastruct/dict"
 	"github.com/Allen9012/Godis/godis/protocol"
+	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/utils"
 	"strconv"
@@ -29,6 +30,9 @@ func (db *DB) getOrInitDict(key string) (dict Dict.Dict, inited bool, errReply p
 	inited = false
 	if dict == nil {
 		dict = Dict.MakeSimple()
+		db.PutEntity(key, &database.DataEntity{
+			Data: dict,
+		})
 		inited = true
 	}
 	return dict, inited, nil

@@ -1,28 +1,34 @@
+package consistenthash
+
 /**
   @author: Allen
   @since: 2023/2/28
   @desc: //一致性Hash
 **/
-package consistenthash
-
 import (
 	"hash/crc32"
 	"sort"
+	"strconv"
+	"strings"
 )
 
+// HashFunc defines function to generate hash code
 type HashFunc func(data []byte) uint32
 
+// NodeMap Map stores nodes so you can pick node from Map
 type NodeMap struct {
-	hashFunc    HashFunc
-	nodeHashs   []int          //需要排序由于sort支持的是int，64机器是支持的
-	nodehashMap map[int]string // 记录的是节点的Hash值和节点的映射
+	hashFunc HashFunc
+	replicas int
+	keys     []int          // sorted
+	hashMap  map[int]string // 记录的是节点的Hash值和节点的映射
 }
 
 // NewNodeMap creates a new NodeMap
-func NewNodeMap(fn HashFunc) *NodeMap {
+func NewNodeMap(replicas int, fn HashFunc) *NodeMap {
 	m := &NodeMap{
-		hashFunc:    fn,
-		nodehashMap: make(map[int]string),
+		replicas: replicas,
+		hashFunc: fn,
+		hashMap:  make(map[int]string),
 	}
 	if m.hashFunc == nil {
 		m.hashFunc = crc32.ChecksumIEEE
@@ -32,7 +38,7 @@ func NewNodeMap(fn HashFunc) *NodeMap {
 
 // IsEmpty returns if there is no node in NodeMap
 func (m *NodeMap) IsEmpty() bool {
-	return len(m.nodeHashs) == 0
+	return len(m.keys) == 0
 }
 
 // AddNode add the given nodes into consistent hash circle
@@ -41,15 +47,29 @@ func (m *NodeMap) AddNode(keys ...string) {
 	// 2. 加入节点的切片
 	// 3. 排序
 	for _, key := range keys {
-		// 判断是不是空串
 		if key == "" {
 			continue
 		}
-		hash := int(m.hashFunc([]byte(key)))
-		m.nodeHashs = append(m.nodeHashs, hash)
-		m.nodehashMap[hash] = key
+		for i := 0; i < m.replicas; i++ {
+			hash := int(m.hashFunc([]byte(strconv.Itoa(i) + key)))
+			m.keys = append(m.keys, hash)
+			m.hashMap[hash] = key
+		}
 	}
-	sort.Ints(m.nodeHashs)
+	sort.Ints(m.keys)
+}
+
+// support hash tag
+func getPartitionKey(key string) string {
+	beg := strings.Index(key, "{")
+	if beg == -1 {
+		return key
+	}
+	end := strings.Index(key, "}")
+	if end == -1 || end == beg+1 {
+		return key
+	}
+	return key[beg+1 : end]
 }
 
 // PickNode gets the closest item in the hash to the provided key.
@@ -60,12 +80,13 @@ func (m *NodeMap) PickNode(key string) string {
 	if m.IsEmpty() {
 		return ""
 	}
-	hash := int(m.hashFunc([]byte(key)))
-	index := sort.Search(len(m.nodeHashs), func(i int) bool {
-		return m.nodeHashs[i] >= hash
+	partitionKey := getPartitionKey(key)
+	hash := int(m.hashFunc([]byte(partitionKey)))
+	index := sort.Search(len(m.keys), func(i int) bool {
+		return m.keys[i] >= hash
 	})
-	if index == len(m.nodeHashs) {
+	if index == len(m.keys) {
 		index = 0
 	}
-	return m.nodehashMap[m.nodeHashs[index]]
+	return m.hashMap[m.keys[index]]
 }

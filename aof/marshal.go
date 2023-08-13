@@ -1,22 +1,21 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/3/5
-	@desc: // 记录特别的aof
-
-*
-*/
 package aof
 
 import (
 	"github.com/Allen9012/Godis/datastruct/dict"
 	List "github.com/Allen9012/Godis/datastruct/list"
+	"github.com/Allen9012/Godis/datastruct/set"
+	SortedSet "github.com/Allen9012/Godis/datastruct/sortedset"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"strconv"
 	"time"
 )
+
+/*
+@author: Allen
+@since: 2023/3/5
+@desc: // 记录特别的aof
+*/
 
 var pExpireAtBytes = []byte("PEXPIREAT") //设置过期时间的命令
 
@@ -29,7 +28,7 @@ func MakeExpireCmd(key string, expireAt time.Time) *protocol.MultiBulkReply {
 	return protocol.MakeMultiBulkReply(args)
 }
 
-// EntityToCmd serialize data entity to redis command
+// EntityToCmd serialize data entity to godis command
 func EntityToCmd(key string, entity *database.DataEntity) *protocol.MultiBulkReply {
 	if entity == nil {
 		return nil
@@ -40,12 +39,12 @@ func EntityToCmd(key string, entity *database.DataEntity) *protocol.MultiBulkRep
 		cmd = stringToCmd(key, val)
 	case List.List:
 		cmd = listToCmd(key, val)
-		//case *set.Set:
-		//	cmd = setToCmd(key, val)
-		//case dict.Dict:
-		//	cmd = hashToCmd(key, val)
-		//case *SortedSet.SortedSet:
-		//	cmd = zSetToCmd(key, val)
+	case *set.Set:
+		cmd = setToCmd(key, val)
+	case dict.Dict:
+		cmd = hashToCmd(key, val)
+	case *SortedSet.SortedSet:
+		cmd = zSetToCmd(key, val)
 	}
 	return cmd
 }
@@ -74,20 +73,20 @@ func listToCmd(key string, list List.List) *protocol.MultiBulkReply {
 	return protocol.MakeMultiBulkReply(args)
 }
 
-//var sAddCmd = []byte("SADD")
+var sAddCmd = []byte("SADD")
 
-//func setToCmd(key string, set *set.Set) *reply.MultiBulkReply {
-//	args := make([][]byte, 2+set.Len())
-//	args[0] = sAddCmd
-//	args[1] = []byte(key)
-//	i := 0
-//	set.ForEach(func(val string) bool {
-//		args[2+i] = []byte(val)
-//		i++
-//		return true
-//	})
-//	return reply.MakeMultiBulkReply(args)
-//}
+func setToCmd(key string, set *set.Set) *protocol.MultiBulkReply {
+	args := make([][]byte, 2+set.Len())
+	args[0] = sAddCmd
+	args[1] = []byte(key)
+	i := 0
+	set.ForEach(func(val string) bool {
+		args[2+i] = []byte(val)
+		i++
+		return true
+	})
+	return protocol.MakeMultiBulkReply(args)
+}
 
 var hMSetCmd = []byte("HMSET")
 
@@ -106,19 +105,19 @@ func hashToCmd(key string, hash dict.Dict) *protocol.MultiBulkReply {
 	return protocol.MakeMultiBulkReply(args)
 }
 
-//var zAddCmd = []byte("ZADD")
-//
-//func zSetToCmd(key string, zset *SortedSet.SortedSet) *reply.MultiBulkReply {
-//	args := make([][]byte, 2+zset.Len()*2)
-//	args[0] = zAddCmd
-//	args[1] = []byte(key)
-//	i := 0
-//	zset.ForEach(int64(0), int64(zset.Len()), true, func(element *SortedSet.Element) bool {
-//		value := strconv.FormatFloat(element.Score, 'f', -1, 64)
-//		args[2+i*2] = []byte(value)
-//		args[3+i*2] = []byte(element.Member)
-//		i++
-//		return true
-//	})
-//	return reply.MakeMultiBulkReply(args)
-//}
+var zAddCmd = []byte("ZADD")
+
+func zSetToCmd(key string, zset *SortedSet.SortedSet) *protocol.MultiBulkReply {
+	args := make([][]byte, 2+zset.Len()*2)
+	args[0] = zAddCmd
+	args[1] = []byte(key)
+	i := 0
+	zset.ForEachByRank(int64(0), int64(zset.Len()), true, func(element *SortedSet.Element) bool {
+		value := strconv.FormatFloat(element.Score, 'f', -1, 64)
+		args[2+i*2] = []byte(value)
+		args[3+i*2] = []byte(element.Member)
+		i++
+		return true
+	})
+	return protocol.MakeMultiBulkReply(args)
+}

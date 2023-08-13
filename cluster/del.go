@@ -1,14 +1,10 @@
-/*
-*
+package cluster
 
+/*
 	@author: Allen
 	@since: 2023/2/28
 	@desc: //需要单独写del命令
-
-*
 */
-package cluster
-
 import (
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"

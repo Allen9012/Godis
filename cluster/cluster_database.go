@@ -1,12 +1,3 @@
-/*
-*
-
-	@author: Allen
-	@since: 2023/2/28
-	@desc: // 集群数据库
-
-*
-*/
 package cluster
 
 import (
@@ -22,6 +13,12 @@ import (
 	"strings"
 )
 
+/*
+@author: Allen
+@since: 2023/2/28
+@desc: // 集群数据库
+*/
+
 type ClusterDatabase struct {
 	self           string                      //记录自己的地址
 	nodes          []string                    // node列表
@@ -30,18 +27,20 @@ type ClusterDatabase struct {
 	db             database.DB
 }
 
+const REPLICA_NUM = 3
+
 // MakeClusterDatabase
 //
 //	 @Description:
 //	 @return *ClusterDatabase
 //		1. 创建对象，和赋值
 //		2. 一致性Hash并添加节点
-//	 3. 建立连接池
+//	 	3. 建立连接池
 func MakeClusterDatabase() *ClusterDatabase {
 	cluster := &ClusterDatabase{
 		self:           godis2.Properties.Self,
 		db:             database2.NewStandaloneServer(),
-		peerPicker:     consistenthash.NewNodeMap(nil),
+		peerPicker:     consistenthash.NewNodeMap(3, nil),
 		peerconnection: make(map[string]*pool.ObjectPool),
 	}
 	nodes := make([]string, len(godis2.Properties.Peers)+1)
@@ -76,7 +75,7 @@ func (c *ClusterDatabase) Exec(client godis.Connection, args [][]byte) (result g
 	cmdName := strings.ToLower(string(args[0]))
 	cmdFunc, ok := router[cmdName]
 	if !ok {
-		protocol.MakeErrReply("not supported cmd")
+		return protocol.MakeErrReply("not supported cmd")
 	}
 	result = cmdFunc(c, client, args)
 	return

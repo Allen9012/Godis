@@ -1,14 +1,10 @@
-/*
-*
+package cluster
 
+/*
 	@author: Allen
 	@since: 2023/2/28
 	@desc: //节点之间的通信
-
-*
 */
-package cluster
-
 import (
 	"context"
 	"errors"

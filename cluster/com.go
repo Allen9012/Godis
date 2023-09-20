@@ -15,6 +15,15 @@ import (
 	"strconv"
 )
 
+type CmdLine = [][]byte
+
+type clientFactory interface {
+	GetPeerClient(peerAddr string) (peerClient, error)
+	ReturnPeerClient(peerAddr string, peerClient peerClient) error
+	NewStream(peerAddr string, cmdLine CmdLine) (peerStream, error)
+	Close() error
+}
+
 // getPeerClient
 //
 //	 @Description: 获取一个peer连接池

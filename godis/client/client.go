@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"github.com/Allen9012/Godis/godis/parser"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/godis"
@@ -8,7 +9,9 @@ import (
 	"github.com/Allen9012/Godis/lib/sync/wait"
 	"net"
 	"runtime/debug"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,8 +22,8 @@ type Client struct {
 	waitingReqs chan *request // waiting response
 	ticker      *time.Ticker
 	addr        string
-
-	working *sync.WaitGroup // its counter presents unfinished requests(pending and waiting)
+	status      int32
+	working     *sync.WaitGroup // its counter presents unfinished requests(pending and waiting)
 }
 
 // request is a message sends to redis server
@@ -33,6 +36,11 @@ type request struct {
 	err       error
 }
 
+const (
+	created = iota
+	running
+	closed
+)
 const (
 	chanSize = 256
 	maxWait  = 3 * time.Second
@@ -57,13 +65,9 @@ func MakeClient(addr string) (*Client, error) {
 func (client *Client) Start() {
 	client.ticker = time.NewTicker(10 * time.Second)
 	go client.handleWrite()
-	go func() {
-		err := client.handleRead()
-		if err != nil {
-			logger.Error(err)
-		}
-	}()
+	go client.handleRead()
 	go client.heartbeat()
+	atomic.StoreInt32(&client.status, running)
 }
 
 // Close stops asynchronous goroutines and close connection
@@ -80,27 +84,36 @@ func (client *Client) Close() {
 	close(client.waitingReqs)
 }
 
-func (client *Client) handleConnectionError(err error) error {
-	err1 := client.conn.Close()
-	if err1 != nil {
-		if opErr, ok := err1.(*net.OpError); ok {
-			if opErr.Err.Error() != "use of closed network connection" {
-				return err1
-			}
+func (client *Client) reconnect() {
+	logger.Info("reconnect with: " + client.addr)
+	_ = client.conn.Close() // ignore possible errors from repeated closes
+
+	var conn net.Conn
+	for i := 0; i < 3; i++ {
+		var err error
+		conn, err = net.Dial("tcp", client.addr)
+		if err != nil {
+			logger.Error("reconnect error: " + err.Error())
+			time.Sleep(time.Second)
+			continue
 		} else {
-			return err1
+			break
 		}
 	}
-	conn, err1 := net.Dial("tcp", client.addr)
-	if err1 != nil {
-		logger.Error(err1)
-		return err1
+	if conn == nil { // reach max retry, abort
+		client.Close()
+		return
 	}
 	client.conn = conn
-	go func() {
-		_ = client.handleRead()
-	}()
-	return nil
+
+	close(client.waitingReqs)
+	for req := range client.waitingReqs {
+		req.err = errors.New("connection closed")
+		req.waiting.Done()
+	}
+	client.waitingReqs = make(chan *request, chanSize)
+	// restart handle read
+	go client.handleRead()
 }
 
 func (client *Client) heartbeat() {
@@ -117,23 +130,26 @@ func (client *Client) handleWrite() {
 
 // Send sends a request to redis server
 func (client *Client) Send(args [][]byte) godis.Reply {
-	request := &request{
+	if atomic.LoadInt32(&client.status) != running {
+		return protocol.MakeErrReply("client closed")
+	}
+	req := &request{
 		args:      args,
 		heartbeat: false,
 		waiting:   &wait.Wait{},
 	}
-	request.waiting.Add(1)
+	req.waiting.Add(1)
 	client.working.Add(1)
 	defer client.working.Done()
-	client.pendingReqs <- request
-	timeout := request.waiting.WaitWithTimeout(maxWait)
+	client.pendingReqs <- req
+	timeout := req.waiting.WaitWithTimeout(maxWait)
 	if timeout {
 		return protocol.MakeErrReply("server time out")
 	}
-	if request.err != nil {
-		return protocol.MakeErrReply("request failed")
+	if req.err != nil {
+		return protocol.MakeErrReply("request failed " + req.err.Error())
 	}
-	return request.reply
+	return req.reply
 }
 
 func (client *Client) doHeartbeat() {
@@ -155,14 +171,14 @@ func (client *Client) doRequest(req *request) {
 	}
 	re := protocol.MakeMultiBulkReply(req.args)
 	bytes := re.ToBytes()
-	_, err := client.conn.Write(bytes)
-	i := 0
-	for err != nil && i < 3 {
-		err = client.handleConnectionError(err)
-		if err == nil {
-			_, err = client.conn.Write(bytes)
+	var err error
+	for i := 0; i < 3; i++ { // only retry, waiting for handleRead
+		_, err = client.conn.Write(bytes)
+		if err == nil ||
+			(!strings.Contains(err.Error(), "timeout") && // only retry timeout
+				!strings.Contains(err.Error(), "deadline exceeded")) {
+			break
 		}
-		i++
 	}
 	if err == nil {
 		client.waitingReqs <- req
@@ -189,14 +205,17 @@ func (client *Client) finishRequest(reply godis.Reply) {
 	}
 }
 
-func (client *Client) handleRead() error {
+func (client *Client) handleRead() {
 	ch := parser.ParseStream(client.conn)
 	for payload := range ch {
 		if payload.Err != nil {
-			client.finishRequest(protocol.MakeErrReply(payload.Err.Error()))
-			continue
+			status := atomic.LoadInt32(&client.status)
+			if status == closed {
+				return
+			}
+			client.reconnect()
+			return
 		}
 		client.finishRequest(payload.Data)
 	}
-	return nil
 }

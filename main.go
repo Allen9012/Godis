@@ -5,10 +5,17 @@ import (
 	"github.com/Allen9012/Godis/godis/server"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/tcp"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
 func main() {
+	go func() {
+		// 在默认端口6060上启动 pprof 服务
+		http.ListenAndServe(":6060", nil)
+	}()
+
 	print(banner)
 	// 配置logger屬性
 	if err := logger.Setup(&logger.Settings{

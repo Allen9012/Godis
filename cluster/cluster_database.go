@@ -4,6 +4,7 @@ import (
 	"context"
 	godis2 "github.com/Allen9012/Godis/config/godis"
 	database2 "github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/godis/parser"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
@@ -58,6 +59,15 @@ func MakeClusterDatabase() *ClusterDatabase {
 	}
 	cluster.nodes = nodes
 	return cluster
+}
+
+type peerClient interface {
+	Send(args [][]byte) godis.Reply
+}
+
+type peerStream interface {
+	Stream() <-chan *parser.PayLoad
+	Close() error
 }
 
 // CmdFunc 声明成类型

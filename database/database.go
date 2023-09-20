@@ -225,12 +225,6 @@ func (db *DB) Flush() {
 	db.locker = lock.Make(lockerSize)
 }
 
-/* ---- TTL Functions ---- */
-
-func genExpireTask(key string) string {
-	return "expire:" + key
-}
-
 /* TODO 优化---- Lock Function ----- */
 
 // RWLocks lock keys for writing and reading
@@ -242,6 +236,11 @@ func (db *DB) RWLocks(writeKeys []string, readKeys []string) {
 // RWUnLocks unlock keys for writing and reading
 func (db *DB) RWUnLocks(writeKeys []string, readKeys []string) {
 	db.locker.RWUnLocks(writeKeys, readKeys)
+}
+
+/* ---- TTL Functions ---- */
+func genExpireTask(key string) string {
+	return "expire:" + key
 }
 
 // Expire sets ttlCmd of key
@@ -283,6 +282,20 @@ func (db *DB) Persist(key string) {
 	taskKey := genExpireTask(key)
 	// 调用第三方库删除倒计时
 	timewheel.Cancel(taskKey)
+}
+
+// IsExpired check whether a key is expired
+func (db *DB) IsExpired(key string) bool {
+	rawExpireTime, ok := db.ttlMap.Get(key)
+	if !ok {
+		return false
+	}
+	expireTime, _ := rawExpireTime.(time.Time)
+	expired := time.Now().After(expireTime)
+	if expired {
+		db.Remove(key)
+	}
+	return expired
 }
 
 func (db *DB) ForEach(cb func(key string, data *database.DataEntity, expiration *time.Time) bool) {

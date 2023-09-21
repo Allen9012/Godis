@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"github.com/Allen9012/Godis/cluster"
 	"github.com/Allen9012/Godis/config/godis"
 	"github.com/Allen9012/Godis/database"
@@ -71,7 +72,7 @@ func (h *Handler) Handle(ctx context.Context, conn net.Conn) {
 		// 2. payload没有错误
 		if payload.Err != nil {
 			// 错误类型
-			if payload.Err == io.EOF || payload.Err == io.ErrUnexpectedEOF ||
+			if payload.Err == io.EOF || errors.Is(payload.Err, io.ErrUnexpectedEOF) ||
 				strings.Contains(payload.Err.Error(), "use of closed network connection") {
 				// 果断断开连接就可以
 				h.closeClient(client)

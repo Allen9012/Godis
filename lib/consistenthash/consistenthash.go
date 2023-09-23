@@ -80,13 +80,18 @@ func (m *NodeMap) PickNode(key string) string {
 	if m.IsEmpty() {
 		return ""
 	}
+	// 支持根据 key 的 hashtag 来确定分布
 	partitionKey := getPartitionKey(key)
 	hash := int(m.hashFunc([]byte(partitionKey)))
+	// sort.Search 会使用二分查找法搜索 keys 中满足 m.keys[i] >= hash 的最小 i 值
 	index := sort.Search(len(m.keys), func(i int) bool {
 		return m.keys[i] >= hash
 	})
+	// 若 key 的 hash 值大于最后一个虚拟节点的 hash 值，则 sort.Search 找不到目标
+	// 这种情况下选择第一个虚拟节点
 	if index == len(m.keys) {
 		index = 0
 	}
+	// 将虚拟节点映射为实际地址
 	return m.hashMap[m.keys[index]]
 }

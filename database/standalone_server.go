@@ -79,6 +79,7 @@ func NewStandaloneServer() *StandaloneServer {
 }
 
 // Exec executes command
+//
 //	@Description: 执行用户指令，相当于转交给DB处理指令
 //	@receiver d
 //	@param client
@@ -231,4 +232,9 @@ func (server *StandaloneServer) mustSelectDB(dbIndex int) *DB {
 		panic(err)
 	}
 	return selectedDB
+}
+
+// GetUndoLogs return rollback commands
+func (server *StandaloneServer) GetUndoLogs(dbIndex int, cmdLine [][]byte) []CmdLine {
+	return server.mustSelectDB(dbIndex).GetUndoLogs(cmdLine)
 }

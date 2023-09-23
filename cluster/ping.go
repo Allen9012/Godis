@@ -11,6 +11,6 @@ package cluster
 
 import "github.com/Allen9012/Godis/interface/godis"
 
-func Ping(cluster *ClusterDatabase, c godis.Connection, cmdArgs [][]byte) godis.Reply {
+func Ping(cluster *Cluster, c godis.Connection, cmdArgs [][]byte) godis.Reply {
 	return cluster.db.Exec(c, cmdArgs)
 }

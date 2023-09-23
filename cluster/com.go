@@ -34,7 +34,7 @@ type clientFactory interface {
 //		1. 判断是否有这个peer
 //		2. 获取一个对象
 //		3. 断言成真正的类型
-func (cluster *ClusterDatabase) getPeerClient(peer string) (*client.Client, error) {
+func (cluster *Cluster) getPeerClient(peer string) (*client.Client, error) {
 	pool, ok := cluster.peerconnection[peer]
 	if !ok {
 		return nil, errors.New("connection not found")
@@ -59,7 +59,7 @@ func (cluster *ClusterDatabase) getPeerClient(peer string) (*client.Client, erro
 //	@param peer
 //	@param peerClient
 //	@return error
-func (cluster *ClusterDatabase) returnPeerClient(peer string, peerClient *client.Client) error {
+func (cluster *Cluster) returnPeerClient(peer string, peerClient *client.Client) error {
 	pool, ok := cluster.peerconnection[peer]
 	if !ok {
 		return errors.New("connection not found")
@@ -77,7 +77,7 @@ func (cluster *ClusterDatabase) returnPeerClient(peer string, peerClient *client
 //	@param c
 //	@param args
 //	@return redis.Reply
-func (cluster *ClusterDatabase) relay(peer string, c godis.Connection, args [][]byte) godis.Reply {
+func (cluster *Cluster) relay(peer string, c godis.Connection, args [][]byte) godis.Reply {
 	if peer == cluster.self {
 		return cluster.db.Exec(c, args)
 	}
@@ -99,11 +99,49 @@ func (cluster *ClusterDatabase) relay(peer string, c godis.Connection, args [][]
 //	@param c
 //	@param args
 //	@return map[string]redis.Reply
-func (cluster *ClusterDatabase) broadcast(c godis.Connection, args [][]byte) map[string]godis.Reply {
+func (cluster *Cluster) broadcast(c godis.Connection, args [][]byte) map[string]godis.Reply {
 	results := make(map[string]godis.Reply)
 	for _, node := range cluster.nodes {
 		result := cluster.relay(node, c, args)
 		results[node] = result
 	}
 	return results
+}
+
+// ensureKey will migrate key to current node if the key is in a slot migrating to current node
+// invoker should provide with locks of key
+func (cluster *Cluster) ensureKey(key string) protocol.ErrorReply {
+	//slotId := getSlot(key)
+	//cluster.slotMu.RLock()
+	//slot := cluster.slots[slotId]
+	//cluster.slotMu.RUnlock()
+	//if slot == nil {
+	//	return nil
+	//}
+	//if slot.state != slotStateImporting || slot.importedKeys.Has(key) {
+	//	return nil
+	//}
+	//resp := cluster.relay(slot.oldNodeID, connection.NewFakeConn(), utils.ToCmdLine("DumpKey_", key))
+	//if protocol.IsErrorReply(resp) {
+	//	return resp.(protocol.ErrorReply)
+	//}
+	//if protocol.IsEmptyMultiBulkReply(resp) {
+	//	slot.importedKeys.Add(key)
+	//	return nil
+	//}
+	//dumpResp := resp.(*protocol.MultiBulkReply)
+	//if len(dumpResp.Args) != 2 {
+	//	return protocol.MakeErrReply("illegal dump key response")
+	//}
+	//// reuse copy to command ^_^
+	//resp = cluster.db.Exec(connection.NewFakeConn(), [][]byte{
+	//	[]byte("CopyTo"), []byte(key), dumpResp.Args[0], dumpResp.Args[1],
+	//})
+	//if protocol.IsErrorReply(resp) {
+	//	return resp.(protocol.ErrorReply)
+	//}
+	//slot.importedKeys.Add(key)
+	//return nil
+	//TODO Implement me
+	panic("need Implement")
 }

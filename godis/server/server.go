@@ -33,7 +33,7 @@ type Handler struct {
 func MakeHandler() *Handler {
 	var db databaseface.DB
 	if godis.Properties.ClusterEnable {
-		db = cluster.MakeClusterDatabase()
+		db = cluster.MakeCluster()
 	} else {
 		db = database.NewStandaloneServer()
 	}

@@ -9,6 +9,6 @@ package cluster
 */
 import "github.com/Allen9012/Godis/interface/godis"
 
-func execSelect(cluster *ClusterDatabase, c godis.Connection, cmdAndArgs [][]byte) godis.Reply {
+func execSelect(cluster *Cluster, c godis.Connection, cmdAndArgs [][]byte) godis.Reply {
 	return cluster.db.Exec(c, cmdAndArgs)
 }

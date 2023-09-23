@@ -1,13 +1,10 @@
-/*
-*
+package cluster
 
+/*
 	@author: Allen
 	@since: 2023/2/28
 	@desc: //rename
-
-*
 */
-package cluster
 
 import (
 	"github.com/Allen9012/Godis/godis/protocol"
@@ -22,7 +19,7 @@ import (
 //	 @param args
 //	 @return redis.Reply
 //		rename k1 k2
-func Rename(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
+func Rename(cluster *Cluster, c godis.Connection, args [][]byte) godis.Reply {
 	if len(args) != 3 {
 		return protocol.MakeErrReply("ERR wrong number of arguments for 'rename' command")
 	}

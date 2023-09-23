@@ -25,7 +25,7 @@ type DBEngine interface {
 	DB
 	ExecWithLock(conn godis.Connection, cmdLine [][]byte) godis.Reply
 	// ExecMulti(conn godis.Connection, watching map[string]uint32, cmdLines []CmdLine) godis.Reply
-	// GetUndoLogs(dbIndex int, cmdLine [][]byte) []CmdLine
+	GetUndoLogs(dbIndex int, cmdLine [][]byte) []CmdLine
 	ForEach(dbIndex int, cb func(key string, data *DataEntity, expiration *time.Time) bool)
 	RWLocks(dbIndex int, writeKeys []string, readKeys []string)
 	RWUnLocks(dbIndex int, writeKeys []string, readKeys []string)

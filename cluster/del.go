@@ -18,7 +18,7 @@ import (
 //	@param c
 //	@param args
 //	@return redis.Reply
-func Del(cluster *ClusterDatabase, c godis.Connection, args [][]byte) godis.Reply {
+func Del(cluster *Cluster, c godis.Connection, args [][]byte) godis.Reply {
 	replies := cluster.broadcast(c, args)
 	var errReply protocol.ErrorReply
 	var deleted int64 = 0

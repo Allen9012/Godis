@@ -4,14 +4,17 @@ import (
 	"context"
 	godis2 "github.com/Allen9012/Godis/config/godis"
 	database2 "github.com/Allen9012/Godis/database"
+	"github.com/Allen9012/Godis/datastruct/dict"
 	"github.com/Allen9012/Godis/godis/parser"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"
 	"github.com/Allen9012/Godis/lib/consistenthash"
+	"github.com/Allen9012/Godis/lib/idgenerator"
 	"github.com/Allen9012/Godis/lib/logger"
 	pool "github.com/jolestar/go-commons-pool/v2"
 	"strings"
+	"sync"
 )
 
 /*
@@ -20,25 +23,33 @@ import (
 @desc: // 集群数据库
 */
 
-type ClusterDatabase struct {
+type Cluster struct {
 	self           string                      //记录自己的地址
 	nodes          []string                    // node列表
 	peerPicker     *consistenthash.NodeMap     //节点选择器
 	peerconnection map[string]*pool.ObjectPool //map保存连接池 节点地址 ： 池
-	db             database.DB
+	db             database.DBEngine
+	topology       topology
+	transactions   *dict.SimpleDict // id -> Transaction 不安全的dict
+	transactionMu  sync.RWMutex     // 事务用锁
+	slotMu         sync.RWMutex
+	//slots          map[uint32]*hostSlot
+	idGenerator *idgenerator.IDGenerator
+
+	clientFactory clientFactory
 }
 
 const REPLICA_NUM = 3
 
-// MakeClusterDatabase
+// MakeCluster
 //
 //	 @Description:
-//	 @return *ClusterDatabase
+//	 @return *Cluster
 //		1. 创建对象，和赋值
 //		2. 一致性Hash并添加节点
 //	 	3. 建立连接池
-func MakeClusterDatabase() *ClusterDatabase {
-	cluster := &ClusterDatabase{
+func MakeCluster() *Cluster {
+	cluster := &Cluster{
 		self:           godis2.Properties.Self,
 		db:             database2.NewStandaloneServer(),
 		peerPicker:     consistenthash.NewNodeMap(3, nil),
@@ -71,11 +82,11 @@ type peerStream interface {
 }
 
 // CmdFunc 声明成类型
-type CmdFunc func(cluster *ClusterDatabase, c godis.Connection, cmdArgs [][]byte) godis.Reply
+type CmdFunc func(cluster *Cluster, c godis.Connection, cmdArgs [][]byte) godis.Reply
 
 var router = makeRouter()
 
-func (c *ClusterDatabase) Exec(client godis.Connection, args [][]byte) (result godis.Reply) {
+func (c *Cluster) Exec(client godis.Connection, args [][]byte) (result godis.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
@@ -91,10 +102,10 @@ func (c *ClusterDatabase) Exec(client godis.Connection, args [][]byte) (result g
 	return
 }
 
-func (c *ClusterDatabase) Close() {
+func (c *Cluster) Close() {
 	c.db.Close()
 }
 
-func (c *ClusterDatabase) AfterClientClose(conn godis.Connection) {
+func (c *Cluster) AfterClientClose(conn godis.Connection) {
 	c.db.AfterClientClose(conn)
 }

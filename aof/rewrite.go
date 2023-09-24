@@ -1,27 +1,24 @@
-/*
-*
+package aof
 
+/*
 	@author: Allen
 	@since: 2023/4/11
 	@desc: //rewrite
-
-*
 */
-package aof
 
 import (
-	"github.com/Allen9012/Godis/config/godis"
+	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/lib/logger"
 	"github.com/Allen9012/Godis/lib/utils"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
 )
 
+// 重写AOF
 func (persister *Persister) newRewriteHandler() *Persister {
 	p := &Persister{}
 	p.aofFilename = persister.aofFilename
@@ -60,7 +57,7 @@ func (persister *Persister) DoRewrite(ctx *RewriteCtx) error {
 	tmpAof.LoadAof(int(ctx.fileSize))
 
 	// rewrite aof tmpFile
-	for i := 0; i < godis.Properties.Databases; i++ {
+	for i := 0; i < config.Properties.Databases; i++ {
 		// select db
 		data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(i))).ToBytes()
 		_, err := tmpFile.Write(data)
@@ -89,9 +86,10 @@ func (persister *Persister) DoRewrite(ctx *RewriteCtx) error {
 
 // StartRewrite prepares rewrite procedure
 func (persister *Persister) StartRewrite() (*RewriteCtx, error) {
+	// 暂停 aof 写入， 数据会在 aofChan 中暂时堆积
 	persister.pausingAof.Lock()
 	defer persister.pausingAof.Unlock()
-
+	// 调用 fsync 将缓冲区中的数据落盘，防止 aof 文件不完整造成错误
 	err := persister.aofFile.Sync()
 	if err != nil {
 		logger.Warn("fsync failed")
@@ -103,7 +101,7 @@ func (persister *Persister) StartRewrite() (*RewriteCtx, error) {
 	fileSize := fileInfo.Size()
 
 	// create tmp file
-	file, err := ioutil.TempFile("", "*.aof")
+	file, err := os.CreateTemp(config.GetTmpDir(), "*.aof")
 	if err != nil {
 		logger.Warn("tmp file create failed")
 		return nil, err
@@ -122,49 +120,57 @@ func (persister *Persister) FinishRewrite(ctx *RewriteCtx) {
 
 	tmpFile := ctx.tmpFile
 	// write commands executed during rewriting to tmp file
-	src, err := os.Open(persister.aofFilename)
-	if err != nil {
-		logger.Error("open aofFilename failed: " + err.Error())
-		return
-	}
-	defer func() {
-		_ = src.Close()
+	errOccurs := func() bool {
+		/* read write commands executed during rewriting */
+		src, err := os.Open(persister.aofFilename)
+		if err != nil {
+			logger.Error("open aofFilename failed: " + err.Error())
+			return true
+		}
+		defer func() {
+			_ = src.Close()
+			_ = tmpFile.Close()
+		}()
+
+		_, err = src.Seek(ctx.fileSize, 0)
+		if err != nil {
+			logger.Error("seek failed: " + err.Error())
+			return true
+		}
+		// 写入一条 Select 命令，使 tmpAof 选中重写开始时刻线上 aof 文件选中的数据库
+		data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(ctx.dbIdx))).ToBytes()
+		_, err = tmpFile.Write(data)
+		if err != nil {
+			logger.Error("tmp file rewrite failed: " + err.Error())
+			return true
+		}
+		// 对齐数据库后就可以把重写过程中产生的数据复制到 tmpAof 文件了
+		_, err = io.Copy(tmpFile, src)
+		if err != nil {
+			logger.Error("copy aof filed failed: " + err.Error())
+			return true
+		}
+		return false
 	}()
-
-	_, err = src.Seek(ctx.fileSize, 0)
-	if err != nil {
-		logger.Error("seek failed: " + err.Error())
+	if errOccurs {
 		return
 	}
 
-	// sync tmpFile's db index with online aofFile
-	data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(ctx.dbIdx))).ToBytes()
-	_, err = tmpFile.Write(data)
-	if err != nil {
-		logger.Error("tmp file rewrite failed: " + err.Error())
-		return
-	}
-	// copy data
-	_, err = io.Copy(tmpFile, src)
-	if err != nil {
-		logger.Error("copy aof filed failed: " + err.Error())
-		return
-	}
-	tmpFileName := tmpFile.Name()
-	_ = tmpFile.Close()
-	// replace current aof file by tmp file
+	// 使用 mv 命令用 tmpAof 代替线上 aof 文件
 	_ = persister.aofFile.Close()
-	_ = os.Rename(tmpFileName, persister.aofFilename)
-
-	// reopen aof file for further write
+	if err := os.Rename(tmpFile.Name(), persister.aofFilename); err != nil {
+		logger.Warn(err)
+	}
+	// 重新打开线上 aof
 	aofFile, err := os.OpenFile(persister.aofFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		panic(err)
 	}
 	persister.aofFile = aofFile
 
-	// write select command again to ensure aof file has the same db index with  persister.currentDB
-	data = protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(persister.currentDB))).ToBytes()
+	// write select command again to resume aof file selected db
+	// it should have the same db index with  persister.currentDB
+	data := protocol.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(persister.currentDB))).ToBytes()
 	_, err = persister.aofFile.Write(data)
 	if err != nil {
 		panic(err)

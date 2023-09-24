@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/Allen9012/Godis/cluster"
-	"github.com/Allen9012/Godis/config/godis"
+	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/database"
 	"github.com/Allen9012/Godis/godis/connection"
 	"github.com/Allen9012/Godis/godis/parser"
@@ -32,7 +32,7 @@ type Handler struct {
 
 func MakeHandler() *Handler {
 	var db databaseface.DB
-	if godis.Properties.ClusterEnable {
+	if config.Properties.ClusterEnable {
 		db = cluster.MakeCluster()
 	} else {
 		db = database.NewStandaloneServer()

@@ -9,7 +9,7 @@ package database
 import (
 	"fmt"
 	"github.com/Allen9012/Godis/aof"
-	godis2 "github.com/Allen9012/Godis/config/godis"
+	godis2 "github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/godis/protocol"
 	"github.com/Allen9012/Godis/interface/database"
 	"github.com/Allen9012/Godis/interface/godis"

@@ -336,9 +336,11 @@ func (persister *Persister) Close() {
 // 写日志的时候独占写
 func (persister *Persister) writeAof(p *payload) {
 	persister.buffer = persister.buffer[:0] // reuse underlying array
-	persister.pausingAof.Lock()             // prevent other goroutines from pausing aof
+	// 使用锁保证每次都会写入一条完整的命令
+	persister.pausingAof.Lock() // prevent other goroutines from pausing aof
 	defer persister.pausingAof.Unlock()
-	// ensure aof is in the right database
+	// 每个客户端都可以选择自己的数据库，所以 payload 中要保存客户端选择的数据库
+	// 选择的数据库与 aof 文件中最新的数据库不一致时写入一条 Select 命令
 	if p.dbIndex != persister.currentDB {
 		// select db
 		selectCmd := utils.ToCmdLine("SELECT", strconv.Itoa(p.dbIndex))
@@ -358,6 +360,7 @@ func (persister *Persister) writeAof(p *payload) {
 	if err != nil {
 		logger.Warn(err)
 	}
+	// 对其他的节点执行callback
 	for listener := range persister.listeners {
 		listener.Callback(persister.buffer)
 	}

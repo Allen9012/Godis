@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"context"
-	godis2 "github.com/Allen9012/Godis/config/godis"
+	godis2 "github.com/Allen9012/Godis/config"
 	database2 "github.com/Allen9012/Godis/database"
 	"github.com/Allen9012/Godis/datastruct/dict"
 	"github.com/Allen9012/Godis/godis/parser"

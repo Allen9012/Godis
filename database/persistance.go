@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/Allen9012/Godis/aof"
-	"github.com/Allen9012/Godis/config/godis"
+	"github.com/Allen9012/Godis/config"
 	"github.com/Allen9012/Godis/interface/database"
 	"sync/atomic"
 )
@@ -33,7 +33,7 @@ func (server *StandaloneServer) bindPersister(aofHandler *aof.Persister) {
 	for _, db := range server.dbSet {
 		singleDB := db.Load().(*DB)
 		singleDB.addAof = func(line CmdLine) {
-			if godis.Properties.AppendOnly { // config may be changed during runtime
+			if config.Properties.AppendOnly { // config may be changed during runtime
 				server.persister.SaveCmdLine(singleDB.index, line)
 			}
 		}
@@ -43,7 +43,7 @@ func (server *StandaloneServer) bindPersister(aofHandler *aof.Persister) {
 // MakeAuxiliaryServer create a Server only with basic capabilities for aof rewrite and other usages
 func MakeAuxiliaryServer() *StandaloneServer {
 	mdb := &StandaloneServer{}
-	mdb.dbSet = make([]*atomic.Value, godis.Properties.Databases)
+	mdb.dbSet = make([]*atomic.Value, config.Properties.Databases)
 	for i := range mdb.dbSet {
 		holder := &atomic.Value{}
 		holder.Store(makeBasicDB())
